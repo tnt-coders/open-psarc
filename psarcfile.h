@@ -8,6 +8,12 @@
 #include <memory>
 #include <cstdint>
 #include <functional>
+#include <stdexcept>
+
+class PsarcException : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
 
 class PsarcFile
 {
@@ -33,17 +39,16 @@ public:
     PsarcFile(PsarcFile&&) noexcept = default;
     PsarcFile& operator=(PsarcFile&&) noexcept = default;
 
-    bool open();
+    void open();
     void close();
     bool isOpen() const;
 
     std::vector<std::string> getFileList() const;
     bool fileExists(const std::string& fileName) const;
     std::vector<uint8_t> extractFile(const std::string& fileName);
-    bool extractFileTo(const std::string& fileName, const std::string& outputPath);
-    bool extractAll(const std::string& outputDirectory);
+    void extractFileTo(const std::string& fileName, const std::string& outputPath);
+    void extractAll(const std::string& outputDirectory);
 
-    std::string getLastError() const { return m_lastError; }
     int getFileCount() const { return static_cast<int>(m_entries.size()); }
     const FileEntry* getEntry(int index) const;
     const FileEntry* getEntry(const std::string& fileName) const;
@@ -64,9 +69,9 @@ private:
         uint32_t archiveFlags = 0;
     };
 
-    bool readHeader();
-    bool readTOC();
-    bool readManifest();
+    void readHeader();
+    void readTOC();
+    void readManifest();
 
     std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& encryptedData);
     std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& encryptedData);
@@ -88,7 +93,6 @@ private:
     std::vector<FileEntry> m_entries;
     std::vector<uint16_t> m_zLengths;
     std::unordered_map<std::string, int> m_fileMap;
-    std::string m_lastError;
     bool m_isOpen = false;
     bool m_tocEncrypted = false;
     LogCallback m_logCallback;

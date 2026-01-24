@@ -2,8 +2,9 @@
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
+#include <format>
+#include <utility>
 #include <sstream>
-#include <iomanip>
 #include <zlib.h>
 #include <openssl/evp.h>
 
@@ -77,36 +78,23 @@ uint32_t PsarcFile::readLittleEndian32()
            (static_cast<uint32_t>(bytes[3]) << 24);
 }
 
-bool PsarcFile::open()
+void PsarcFile::open()
 {
     if (m_isOpen) {
-        return true;
+        return;
     }
 
     m_file = std::make_unique<std::ifstream>(m_filePath, std::ios::binary);
 
     if (!m_file->is_open()) {
-        m_lastError = "Failed to open file: " + m_filePath;
-        return false;
+        throw PsarcException(std::format("Failed to open file: {}", m_filePath));
     }
 
-    if (!readHeader()) {
-        close();
-        return false;
-    }
-
-    if (!readTOC()) {
-        close();
-        return false;
-    }
-
-    if (!readManifest()) {
-        close();
-        return false;
-    }
+    readHeader();
+    readTOC();
+    readManifest();
 
     m_isOpen = true;
-    return true;
 }
 
 void PsarcFile::close()
@@ -144,19 +132,16 @@ const PsarcFile::FileEntry* PsarcFile::getEntry(const std::string& fileName) con
     return &m_entries[it->second];
 }
 
-bool PsarcFile::readHeader()
+void PsarcFile::readHeader()
 {
     m_file->seekg(0);
 
     m_header.magic = readBigEndian32();
 
     if (m_header.magic != 0x50534152) {
-        std::ostringstream oss;
-        oss << "Invalid PSARC file: wrong magic number (got 0x"
-            << std::hex << std::setfill('0') << std::setw(8) << m_header.magic
-            << ", expected 0x50534152)";
-        m_lastError = oss.str();
-        return false;
+        throw PsarcException(std::format(
+            "Invalid PSARC file: wrong magic number (got 0x{:08X}, expected 0x50534152)",
+            m_header.magic));
     }
 
     m_header.versionMajor = readBigEndian16();
@@ -171,29 +156,32 @@ bool PsarcFile::readHeader()
     m_tocEncrypted = (m_header.archiveFlags & 0x04) != 0;
 
     if (m_header.versionMajor != 1 || m_header.versionMinor != 4) {
-        std::ostringstream oss;
-        oss << "Unsupported PSARC version: " << m_header.versionMajor
-            << "." << m_header.versionMinor << " (expected 1.4)";
-        m_lastError = oss.str();
-        return false;
+        throw PsarcException(std::format(
+            "Unsupported PSARC version: {}.{} (expected 1.4)",
+            m_header.versionMajor, m_header.versionMinor));
     }
 
     std::string compressionStr(m_header.compressionMethod, 4);
 
-    std::ostringstream logMsg;
-    logMsg << "PSARC Header:\n"
-           << "  Magic: PSAR\n"
-           << "  Version: " << m_header.versionMajor << "." << m_header.versionMinor << "\n"
-           << "  Compression: " << compressionStr << "\n"
-           << "  TOC Length: " << m_header.tocLength << "\n"
-           << "  TOC Entry Size: " << m_header.tocEntrySize << "\n"
-           << "  Num Files: " << m_header.numFiles << "\n"
-           << "  Block Size: " << m_header.blockSize << "\n"
-           << "  Archive Flags: 0x" << std::hex << m_header.archiveFlags << std::dec << "\n"
-           << "  TOC Encrypted: " << (m_tocEncrypted ? "true" : "false");
-    log(logMsg.str());
-
-    return true;
+    log(std::format(
+        "PSARC Header:\n"
+        "  Magic: PSAR\n"
+        "  Version: {}.{}\n"
+        "  Compression: {}\n"
+        "  TOC Length: {}\n"
+        "  TOC Entry Size: {}\n"
+        "  Num Files: {}\n"
+        "  Block Size: {}\n"
+        "  Archive Flags: 0x{:X}\n"
+        "  TOC Encrypted: {}",
+        m_header.versionMajor, m_header.versionMinor,
+        compressionStr,
+        m_header.tocLength,
+        m_header.tocEntrySize,
+        m_header.numFiles,
+        m_header.blockSize,
+        m_header.archiveFlags,
+        m_tocEncrypted ? "true" : "false"));
 }
 
 std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& encryptedData)
@@ -217,14 +205,12 @@ std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& encrypted
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
-        m_lastError = "Failed to create cipher context";
-        return {};
+        throw PsarcException("Failed to create cipher context");
     }
 
     if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cfb128(), nullptr, PSARC_KEY, PSARC_IV) != 1) {
         EVP_CIPHER_CTX_free(ctx);
-        m_lastError = "Failed to initialize AES decryption";
-        return {};
+        throw PsarcException("Failed to initialize AES decryption");
     }
 
     EVP_CIPHER_CTX_set_padding(ctx, 0);
@@ -233,8 +219,7 @@ std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& encrypted
     if (EVP_DecryptUpdate(ctx, decrypted.data(), &len,
                           paddedInput.data(), static_cast<int>(paddedInput.size())) != 1) {
         EVP_CIPHER_CTX_free(ctx);
-        m_lastError = "Failed to decrypt TOC";
-        return {};
+        throw PsarcException("Failed to decrypt TOC");
     }
 
     int finalLen = 0;
@@ -249,8 +234,7 @@ std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& encrypted
 std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encryptedData)
 {
     if (encryptedData.size() < 24) {
-        m_lastError = "SNG data too short";
-        return {};
+        throw PsarcException("SNG data too short");
     }
 
     // Read header (little-endian)
@@ -260,8 +244,7 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encrypted
                      (static_cast<uint32_t>(encryptedData[3]) << 24);
 
     if (magic != 0x4A) {
-        m_lastError = "Invalid SNG magic";
-        return {};
+        throw PsarcException("Invalid SNG magic");
     }
 
     uint32_t flags = encryptedData[4] |
@@ -276,12 +259,12 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encrypted
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
-        return {};
+        throw PsarcException("Failed to create cipher context for SNG decryption");
     }
 
     if (EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), nullptr, SNG_KEY, iv.data()) != 1) {
         EVP_CIPHER_CTX_free(ctx);
-        return {};
+        throw PsarcException("Failed to initialize SNG decryption");
     }
 
     EVP_CIPHER_CTX_set_padding(ctx, 0);
@@ -290,7 +273,7 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encrypted
     if (EVP_DecryptUpdate(ctx, decrypted.data(), &len,
                           payload.data(), static_cast<int>(payload.size())) != 1) {
         EVP_CIPHER_CTX_free(ctx);
-        return {};
+        throw PsarcException("Failed to decrypt SNG data");
     }
 
     int finalLen = 0;
@@ -302,7 +285,7 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encrypted
 
     if (flags & 0x01) {
         if (decrypted.size() < 4) {
-            return {};
+            throw PsarcException("Decrypted SNG data too short for decompression");
         }
 
         uint32_t uncompressedSize = decrypted[0] |
@@ -314,15 +297,19 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& encrypted
         bool success = false;
         std::vector<uint8_t> uncompressed = decompressZlib(compressedData, uncompressedSize, success);
 
+        if (!success) {
+            throw PsarcException("Failed to decompress SNG data");
+        }
+
         return uncompressed;
     }
 
     return decrypted;
 }
 
-bool PsarcFile::readTOC()
+void PsarcFile::readTOC()
 {
-    log("TOC encrypted: " + std::string(m_tocEncrypted ? "true" : "false"));
+    log(std::format("TOC encrypted: {}", m_tocEncrypted ? "true" : "false"));
 
     m_file->seekg(32);
 
@@ -331,20 +318,18 @@ bool PsarcFile::readTOC()
     m_file->read(reinterpret_cast<char*>(tocData.data()), tocDataSize);
 
     if (m_file->gcount() != tocDataSize) {
-        std::ostringstream oss;
-        oss << "Failed to read TOC data: expected " << tocDataSize
-            << " bytes, got " << m_file->gcount();
-        m_lastError = oss.str();
-        return false;
+        throw PsarcException(std::format(
+            "Failed to read TOC data: expected {} bytes, got {}",
+            tocDataSize, m_file->gcount()));
     }
 
-    log("Read " + std::to_string(tocDataSize) + " bytes of TOC data");
+    log(std::format("Read {} bytes of TOC data", tocDataSize));
 
     if (m_tocEncrypted) {
         log("Decrypting TOC...");
         tocData = decryptTOC(tocData);
         if (tocData.empty()) {
-            return false;
+            throw PsarcException("TOC decryption returned empty data");
         }
         log("TOC decrypted successfully");
     }
@@ -370,13 +355,12 @@ bool PsarcFile::readTOC()
     int bNum = (m_header.tocEntrySize - 20) / 2;
 
     if (bNum < 1 || bNum > 8) {
-        std::ostringstream oss;
-        oss << "Invalid byte width: " << bNum << " (entry size: " << m_header.tocEntrySize << ")";
-        m_lastError = oss.str();
-        return false;
+        throw PsarcException(std::format(
+            "Invalid byte width: {} (entry size: {})",
+            bNum, m_header.tocEntrySize));
     }
 
-    log("Byte width for length/offset: " + std::to_string(bNum));
+    log(std::format("Byte width for length/offset: {}", bNum));
 
     m_entries.resize(m_header.numFiles);
 
@@ -400,10 +384,8 @@ bool PsarcFile::readTOC()
         m_entries[i].startChunkIndex = zIndex;
 
         if (i < 5) {
-            std::ostringstream oss;
-            oss << "Entry " << i << ": zIndex=" << zIndex
-                << " offset=" << offset << " uncompSize=" << length;
-            log(oss.str());
+            log(std::format("Entry {}: zIndex={} offset={} uncompSize={}",
+                            i, zIndex, offset, length));
         }
     }
 
@@ -413,29 +395,25 @@ bool PsarcFile::readTOC()
         m_zLengths.push_back(zLen);
     }
 
-    log("Read " + std::to_string(m_zLengths.size()) + " zlength entries");
+    log(std::format("Read {} zlength entries", m_zLengths.size()));
     log("TOC parsing complete");
-
-    return true;
 }
 
-bool PsarcFile::readManifest()
+void PsarcFile::readManifest()
 {
     if (m_entries.empty()) {
-        m_lastError = "No entries in PSARC file";
-        return false;
+        throw PsarcException("No entries in PSARC file");
     }
 
     std::vector<uint8_t> manifestData = extractFileByIndex(0);
 
     if (manifestData.empty() && m_entries[0].uncompressedSize > 0) {
-        m_lastError = "Failed to extract manifest: " + m_lastError;
-        return false;
+        throw PsarcException("Failed to extract manifest");
     }
 
     std::string manifestStr(manifestData.begin(), manifestData.end());
 
-    log("Manifest size: " + std::to_string(manifestData.size()) + " bytes");
+    log(std::format("Manifest size: {} bytes", manifestData.size()));
 
     // Split by newlines
     std::vector<std::string> fileNames;
@@ -450,8 +428,8 @@ bool PsarcFile::readManifest()
         }
     }
 
-    log("Manifest lists " + std::to_string(fileNames.size()) + " files, archive has " +
-        std::to_string(m_entries.size()) + " entries");
+    log(std::format("Manifest lists {} files, archive has {} entries",
+                    fileNames.size(), m_entries.size()));
 
     m_entries[0].name = "NamesBlock.bin";
     m_fileMap["NamesBlock.bin"] = 0;
@@ -462,9 +440,7 @@ bool PsarcFile::readManifest()
         m_fileMap[fileNames[nameIdx]] = static_cast<int>(i);
     }
 
-    log("Mapped " + std::to_string(m_fileMap.size()) + " file names");
-
-    return true;
+    log(std::format("Mapped {} file names", m_fileMap.size()));
 }
 
 std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize, bool& success)
@@ -543,8 +519,7 @@ std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data,
 std::vector<uint8_t> PsarcFile::extractFileByIndex(int entryIndex)
 {
     if (entryIndex < 0 || entryIndex >= static_cast<int>(m_entries.size())) {
-        m_lastError = "Invalid entry index: " + std::to_string(entryIndex);
-        return {};
+        throw PsarcException(std::format("Invalid entry index: {}", entryIndex));
     }
 
     const FileEntry& entry = m_entries[entryIndex];
@@ -562,10 +537,8 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int entryIndex)
 
     while (result.size() < entry.uncompressedSize) {
         if (zIndex >= m_zLengths.size()) {
-            std::ostringstream oss;
-            oss << "zIndex " << zIndex << " out of range (max " << m_zLengths.size() << ")";
-            m_lastError = oss.str();
-            return {};
+            throw PsarcException(std::format(
+                "zIndex {} out of range (max {})", zIndex, m_zLengths.size()));
         }
 
         uint16_t zLen = m_zLengths[zIndex];
@@ -594,8 +567,8 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int entryIndex)
             if (compressionStr == "zlib") {
                 decompressedData = decompressZlib(chunk, expectedSize, decompressSuccess);
             } else {
-                m_lastError = "Unsupported compression method: " + compressionStr;
-                return {};
+                throw PsarcException(std::format(
+                    "Unsupported compression method: {}", compressionStr));
             }
 
             if (decompressSuccess) {
@@ -649,60 +622,53 @@ std::vector<uint8_t> PsarcFile::extractFile(const std::string& fileName)
 {
     auto it = m_fileMap.find(fileName);
     if (it == m_fileMap.end()) {
-        m_lastError = "File not found: " + fileName;
-        return {};
+        throw PsarcException(std::format("File not found: {}", fileName));
     }
 
     return extractFileByIndex(it->second);
 }
 
-bool PsarcFile::extractFileTo(const std::string& fileName, const std::string& outputPath)
+void PsarcFile::extractFileTo(const std::string& fileName, const std::string& outputPath)
 {
     std::vector<uint8_t> data = extractFile(fileName);
 
-    if (data.empty() && !fileExists(fileName)) {
-        return false;
-    }
-
     std::ofstream outFile(outputPath, std::ios::binary);
     if (!outFile.is_open()) {
-        m_lastError = "Failed to create output file: " + outputPath;
-        return false;
+        throw PsarcException(std::format("Failed to create output file: {}", outputPath));
     }
 
     outFile.write(reinterpret_cast<const char*>(data.data()), data.size());
 
     if (!outFile.good()) {
-        m_lastError = "Failed to write all data to file";
-        return false;
+        throw PsarcException("Failed to write all data to file");
     }
 
     outFile.close();
-    return true;
 }
 
-bool PsarcFile::extractAll(const std::string& outputDirectory)
+void PsarcFile::extractAll(const std::string& outputDirectory)
 {
     fs::path baseDir(outputDirectory);
 
     if (!fs::exists(baseDir)) {
         std::error_code ec;
         if (!fs::create_directories(baseDir, ec)) {
-            m_lastError = "Failed to create output directory";
-            return false;
+            throw PsarcException(std::format(
+                "Failed to create output directory: {}", outputDirectory));
         }
     }
 
-    log("Extracting " + std::to_string(m_entries.size()) + " files to " + outputDirectory);
+    log(std::format("Extracting {} files to {}", m_entries.size(), outputDirectory));
 
     int extracted = 0;
     int failed = 0;
+    std::string lastError;
 
     for (size_t i = 0; i < m_entries.size(); ++i) {
         const FileEntry& entry = m_entries[i];
 
         if (entry.name.empty()) {
-            log("Skipping entry " + std::to_string(i) + " - no name");
+            log(std::format("Skipping entry {} - no name", i));
             continue;
         }
 
@@ -719,39 +685,47 @@ bool PsarcFile::extractAll(const std::string& outputDirectory)
         if (!fs::exists(parentDir)) {
             std::error_code ec;
             if (!fs::create_directories(parentDir, ec)) {
-                log("Failed to create directory: " + parentDir.string());
+                log(std::format("Failed to create directory: {}", parentDir.string()));
                 failed++;
                 continue;
             }
         }
 
-        std::vector<uint8_t> data = extractFileByIndex(static_cast<int>(i));
+        try {
+            std::vector<uint8_t> data = extractFileByIndex(static_cast<int>(i));
 
-        if (data.empty() && entry.uncompressedSize > 0) {
-            log("Failed to extract " + entry.name + ": " + m_lastError);
+            if (data.empty() && entry.uncompressedSize > 0) {
+                log(std::format("Failed to extract {}: empty data", entry.name));
+                failed++;
+                continue;
+            }
+
+            std::ofstream outFile(outputPath, std::ios::binary);
+            if (!outFile.is_open()) {
+                log(std::format("Failed to write {}", outputPath.string()));
+                failed++;
+                continue;
+            }
+
+            outFile.write(reinterpret_cast<const char*>(data.data()), data.size());
+            outFile.close();
+
+            extracted++;
+
+            if (extracted % 50 == 0) {
+                log(std::format("Progress: {} files extracted...", extracted));
+            }
+        } catch (const PsarcException& e) {
+            log(std::format("Failed to extract {}: {}", entry.name, e.what()));
+            lastError = e.what();
             failed++;
-            continue;
-        }
-
-        std::ofstream outFile(outputPath, std::ios::binary);
-        if (!outFile.is_open()) {
-            log("Failed to write " + outputPath.string());
-            failed++;
-            continue;
-        }
-
-        outFile.write(reinterpret_cast<const char*>(data.data()), data.size());
-        outFile.close();
-
-        extracted++;
-
-        if (extracted % 50 == 0) {
-            log("Progress: " + std::to_string(extracted) + " files extracted...");
         }
     }
 
-    log("Extraction complete: " + std::to_string(extracted) + " succeeded, " +
-        std::to_string(failed) + " failed");
+    log(std::format("Extraction complete: {} succeeded, {} failed", extracted, failed));
 
-    return (failed == 0);
+    if (failed > 0) {
+        throw PsarcException(std::format(
+            "Extraction completed with {} failures. Last error: {}", failed, lastError));
+    }
 }
