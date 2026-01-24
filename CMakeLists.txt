@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(test_psarc LANGUAGES CXX)
+project(open-psarc LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ZLIB REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-add_executable(test_psarc
+add_executable(open-psarc
     main.cpp
     psarcfile.h
     psarcfile.cpp
@@ -24,7 +24,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 include(GNUInstallDirs)
-install(TARGETS test_psarc
+install(TARGETS open-psarc
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
