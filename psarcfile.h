@@ -72,7 +72,6 @@ private:
     std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& encryptedData);
 
     std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize, bool& success);
-    std::vector<uint8_t> decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize, bool& success);
 
     std::vector<uint8_t> extractFileByIndex(int entryIndex);
 

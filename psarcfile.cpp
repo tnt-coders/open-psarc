@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iomanip>
 #include <zlib.h>
-#include <lzma.h>
 #include <openssl/evp.h>
 
 namespace fs = std::filesystem;
@@ -541,41 +540,6 @@ std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data,
     return {};
 }
 
-std::vector<uint8_t> PsarcFile::decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize, bool& success)
-{
-    success = false;
-
-    if (data.empty()) {
-        return {};
-    }
-
-    std::vector<uint8_t> result(uncompressedSize);
-
-    lzma_stream strm = LZMA_STREAM_INIT;
-
-    lzma_ret ret = lzma_alone_decoder(&strm, UINT64_MAX);
-    if (ret != LZMA_OK) {
-        return {};
-    }
-
-    strm.next_in = data.data();
-    strm.avail_in = data.size();
-    strm.next_out = result.data();
-    strm.avail_out = uncompressedSize;
-
-    ret = lzma_code(&strm, LZMA_FINISH);
-    lzma_end(&strm);
-
-    if (ret == LZMA_STREAM_END || ret == LZMA_OK) {
-        result.resize(uncompressedSize - strm.avail_out);
-        success = true;
-        return result;
-    }
-
-    success = false;
-    return {};
-}
-
 std::vector<uint8_t> PsarcFile::extractFileByIndex(int entryIndex)
 {
     if (entryIndex < 0 || entryIndex >= static_cast<int>(m_entries.size())) {
@@ -629,8 +593,9 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int entryIndex)
 
             if (compressionStr == "zlib") {
                 decompressedData = decompressZlib(chunk, expectedSize, decompressSuccess);
-            } else if (compressionStr == "lzma") {
-                decompressedData = decompressLZMA(chunk, expectedSize, decompressSuccess);
+            } else {
+                m_lastError = "Unsupported compression method: " + compressionStr;
+                return {};
             }
 
             if (decompressSuccess) {
@@ -743,7 +708,9 @@ bool PsarcFile::extractAll(const std::string& outputDirectory)
 
         // Convert forward slashes to native path separators
         std::string relativePath = entry.name;
-        std::replace(relativePath.begin(), relativePath.end(), '/', fs::path::preferred_separator);
+#ifdef _WIN32
+        std::replace(relativePath.begin(), relativePath.end(), '/', '\\');
+#endif
 
         fs::path outputPath = baseDir / relativePath;
 

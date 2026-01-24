@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find compression libraries via Conan
 find_package(ZLIB REQUIRED)
-find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 add_executable(test_psarc
@@ -20,7 +19,6 @@ add_executable(test_psarc
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ZLIB::ZLIB
-        LibLZMA::LibLZMA
         OpenSSL::SSL
         OpenSSL::Crypto
 )
