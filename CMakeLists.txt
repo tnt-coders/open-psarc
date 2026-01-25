@@ -11,8 +11,8 @@ find_package(OpenSSL REQUIRED)
 
 add_executable(open-psarc
     main.cpp
-    psarcfile.h
-    psarcfile.cpp
+    psarc_file.h
+    psarc_file.cpp
 )
 
 # Link compression libraries
