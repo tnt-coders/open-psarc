@@ -1,15 +1,15 @@
-#ifndef PSARCFILE_H
-#define PSARCFILE_H
+#pragma once
 
-#include <string>
-#include <vector>
-#include <unordered_map>
+#include <cstdint>
 #include <fstream>
 #include <memory>
-#include <cstdint>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-class PsarcException : public std::runtime_error {
+class PsarcException : public std::runtime_error
+{
 public:
     using std::runtime_error::runtime_error;
 };
@@ -17,7 +17,8 @@ public:
 class PsarcFile
 {
 public:
-    struct FileEntry {
+    struct FileEntry
+    {
         std::string name;
         uint64_t offset = 0;
         uint64_t uncompressedSize = 0;
@@ -34,20 +35,21 @@ public:
 
     void open();
     void close();
-    bool isOpen() const { return m_isOpen; }
+    [[nodiscard]] bool isOpen() const { return m_isOpen; }
 
-    std::vector<std::string> getFileList() const;
-    bool fileExists(const std::string& fileName) const;
-    std::vector<uint8_t> extractFile(const std::string& fileName);
+    [[nodiscard]] std::vector<std::string> getFileList() const;
+    [[nodiscard]] bool fileExists(const std::string& fileName) const;
+    [[nodiscard]] std::vector<uint8_t> extractFile(const std::string& fileName);
     void extractFileTo(const std::string& fileName, const std::string& outputPath);
     void extractAll(const std::string& outputDirectory);
 
-    int getFileCount() const { return static_cast<int>(m_entries.size()); }
-    const FileEntry* getEntry(int index) const;
-    const FileEntry* getEntry(const std::string& fileName) const;
+    [[nodiscard]] int getFileCount() const { return static_cast<int>(m_entries.size()); }
+    [[nodiscard]] const FileEntry* getEntry(int index) const;
+    [[nodiscard]] const FileEntry* getEntry(const std::string& fileName) const;
 
 private:
-    struct Header {
+    struct Header
+    {
         uint32_t magic = 0;
         uint16_t versionMajor = 0;
         uint16_t versionMinor = 0;
@@ -63,13 +65,13 @@ private:
     void readTOC();
     void readManifest();
 
-    std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
-    std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
-    std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
-    std::vector<uint8_t> extractFileByIndex(int index);
+    [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
+    [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
+    [[nodiscard]] std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
+    [[nodiscard]] std::vector<uint8_t> extractFileByIndex(int index);
 
-    uint16_t readBigEndian16();
-    uint32_t readBigEndian32();
+    [[nodiscard]] uint16_t readBigEndian16();
+    [[nodiscard]] uint32_t readBigEndian32();
 
     std::string m_filePath;
     std::unique_ptr<std::ifstream> m_file;
@@ -79,5 +81,3 @@ private:
     std::unordered_map<std::string, int> m_fileMap;
     bool m_isOpen = false;
 };
-
-#endif // PSARCFILE_H
