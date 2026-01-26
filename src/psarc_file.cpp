@@ -1,4 +1,4 @@
-#include "psarc_file.h"
+#include "open-psarc/psarc_file.h"
 
 #include <algorithm>
 #include <array>
