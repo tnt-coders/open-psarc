@@ -36,9 +36,24 @@ static constexpr uint32_t SNG_MAGIC = 0x4A;
 static constexpr uint32_t TOC_ENCRYPTED_FLAG = 0x04;
 static constexpr uint32_t SNG_COMPRESSED_FLAG = 0x01;
 
+[[nodiscard]] static constexpr uint16_t readLE16(const uint8_t* data) noexcept
+{
+    return static_cast<uint16_t>(data[0] | (data[1] << 8));
+}
+
 [[nodiscard]] static constexpr uint32_t readLE32(const uint8_t* data) noexcept
 {
     return data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+}
+
+[[nodiscard]] static constexpr uint16_t readBE16(const uint8_t* data) noexcept
+{
+    return static_cast<uint16_t>((data[0] << 8) | data[1]);
+}
+
+[[nodiscard]] static constexpr uint32_t readBE32(const uint8_t* data) noexcept
+{
+    return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
 }
 
 PsarcFile::PsarcFile(const std::string& filePath)
@@ -51,18 +66,32 @@ PsarcFile::~PsarcFile()
     close();
 }
 
+void PsarcFile::readBytes(void* dest, size_t count)
+{
+    m_file->read(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count));
+    if (!m_file->good() && !m_file->eof())
+    {
+        throw PsarcException("Failed to read from file");
+    }
+    if (static_cast<size_t>(m_file->gcount()) != count)
+    {
+        throw PsarcException(std::format("Unexpected end of file: expected {} bytes, got {}",
+                                         count, m_file->gcount()));
+    }
+}
+
 uint16_t PsarcFile::readBigEndian16()
 {
     std::array<uint8_t, 2> bytes{};
-    m_file->read(reinterpret_cast<char*>(bytes.data()), bytes.size());
-    return static_cast<uint16_t>((bytes[0] << 8) | bytes[1]);
+    readBytes(bytes.data(), bytes.size());
+    return readBE16(bytes.data());
 }
 
 uint32_t PsarcFile::readBigEndian32()
 {
     std::array<uint8_t, 4> bytes{};
-    m_file->read(reinterpret_cast<char*>(bytes.data()), bytes.size());
-    return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+    readBytes(bytes.data(), bytes.size());
+    return readBE32(bytes.data());
 }
 
 void PsarcFile::open()
@@ -124,7 +153,7 @@ void PsarcFile::readHeader()
 
     m_header.versionMajor = readBigEndian16();
     m_header.versionMinor = readBigEndian16();
-    m_file->read(m_header.compressionMethod, sizeof(m_header.compressionMethod));
+    readBytes(m_header.compressionMethod, sizeof(m_header.compressionMethod));
     m_header.tocLength = readBigEndian32();
     m_header.tocEntrySize = readBigEndian32();
     m_header.numFiles = readBigEndian32();
@@ -234,7 +263,7 @@ void PsarcFile::readTOC()
 
     m_file->seekg(32);
     std::vector<uint8_t> tocData(m_header.tocLength - 32);
-    m_file->read(reinterpret_cast<char*>(tocData.data()), static_cast<std::streamsize>(tocData.size()));
+    readBytes(tocData.data(), tocData.size());
 
     if (encrypted)
     {
@@ -249,28 +278,24 @@ void PsarcFile::readTOC()
 
     size_t pos = 0;
 
-    auto readBE16 = [&]() -> uint16_t
-    {
-        uint16_t val = static_cast<uint16_t>((tocData[pos] << 8) | tocData[pos + 1]);
-        pos += 2;
-        return val;
-    };
-
-    auto readBE32 = [&]() -> uint32_t
-    {
-        uint32_t val = (tocData[pos] << 24) | (tocData[pos + 1] << 16) |
-                       (tocData[pos + 2] << 8) | tocData[pos + 3];
-        pos += 4;
-        return val;
-    };
-
     m_entries.resize(m_header.numFiles);
 
     for (uint32_t i = 0; i < m_header.numFiles; ++i)
     {
         pos += 16; // Skip MD5
 
-        m_entries[i].startChunkIndex = readBE32();
+        if (pos + 4 > tocData.size())
+        {
+            throw PsarcException("TOC data truncated while reading entry");
+        }
+
+        m_entries[i].startChunkIndex = readBE32(tocData.data() + pos);
+        pos += 4;
+
+        if (pos + static_cast<size_t>(bNum * 2) > tocData.size())
+        {
+            throw PsarcException("TOC data truncated while reading length/offset");
+        }
 
         uint64_t length = 0;
         uint64_t offset = 0;
@@ -289,7 +314,8 @@ void PsarcFile::readTOC()
 
     while (pos + 1 < tocData.size())
     {
-        m_zLengths.push_back(readBE16());
+        m_zLengths.push_back(readBE16(tocData.data() + pos));
+        pos += 2;
     }
 }
 
@@ -393,13 +419,22 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
         {
             std::vector<uint8_t> block(m_header.blockSize);
             m_file->read(reinterpret_cast<char*>(block.data()), static_cast<std::streamsize>(m_header.blockSize));
-            block.resize(static_cast<size_t>(m_file->gcount()));
+            const auto bytesRead = static_cast<size_t>(m_file->gcount());
+            if (bytesRead == 0 && !m_file->eof())
+            {
+                throw PsarcException("Failed to read uncompressed block");
+            }
+            block.resize(bytesRead);
             result.insert(result.end(), block.begin(), block.end());
         }
         else
         {
             std::vector<uint8_t> chunk(zLen);
             m_file->read(reinterpret_cast<char*>(chunk.data()), zLen);
+            if (static_cast<size_t>(m_file->gcount()) != zLen)
+            {
+                throw PsarcException("Failed to read compressed chunk");
+            }
 
             const uint64_t remaining = entry.uncompressedSize - result.size();
             const uint64_t expectedSize = std::min(remaining, static_cast<uint64_t>(m_header.blockSize));
@@ -467,12 +502,20 @@ void PsarcFile::extractFileTo(const std::string& fileName, const std::string& ou
     {
         throw PsarcException(std::format("Failed to create file: {}", outputPath));
     }
+
     out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+
+    if (!out.good())
+    {
+        throw PsarcException(std::format("Failed to write file: {}", outputPath));
+    }
 }
 
 void PsarcFile::extractAll(const std::string& outputDirectory)
 {
     fs::create_directories(outputDirectory);
+
+    std::vector<std::string> failedFiles;
 
     for (size_t i = 0; i < m_entries.size(); ++i)
     {
@@ -483,13 +526,40 @@ void PsarcFile::extractAll(const std::string& outputDirectory)
         }
 
         const fs::path outputPath = fs::path(outputDirectory) / entry.name;
-        fs::create_directories(outputPath.parent_path());
 
-        const auto data = extractFileByIndex(static_cast<int>(i));
-
-        if (std::ofstream out(outputPath, std::ios::binary); out)
+        try
         {
+            fs::create_directories(outputPath.parent_path());
+
+            const auto data = extractFileByIndex(static_cast<int>(i));
+
+            std::ofstream out(outputPath, std::ios::binary);
+            if (!out)
+            {
+                failedFiles.push_back(std::format("{}: failed to create file", entry.name));
+                continue;
+            }
+
             out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+
+            if (!out.good())
+            {
+                failedFiles.push_back(std::format("{}: failed to write data", entry.name));
+            }
         }
+        catch (const std::exception& e)
+        {
+            failedFiles.push_back(std::format("{}: {}", entry.name, e.what()));
+        }
+    }
+
+    if (!failedFiles.empty())
+    {
+        std::string errorMsg = std::format("Failed to extract {} file(s):\n", failedFiles.size());
+        for (const auto& msg : failedFiles)
+        {
+            errorMsg += "  " + msg + "\n";
+        }
+        throw PsarcException(errorMsg);
     }
 }

@@ -65,17 +65,18 @@ private:
     void readTOC();
     void readManifest();
 
-    [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
-    [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
-    [[nodiscard]] std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
-    [[nodiscard]] std::vector<uint8_t> extractFileByIndex(int index);
-
+    void readBytes(void* dest, size_t count);
     [[nodiscard]] uint16_t readBigEndian16();
     [[nodiscard]] uint32_t readBigEndian32();
 
+    [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
+    [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
+    [[nodiscard]] static std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
+    [[nodiscard]] std::vector<uint8_t> extractFileByIndex(int index);
+
     std::string m_filePath;
     std::unique_ptr<std::ifstream> m_file;
-    Header m_header;
+    Header m_header{};
     std::vector<FileEntry> m_entries;
     std::vector<uint16_t> m_zLengths;
     std::unordered_map<std::string, int> m_fileMap;
