@@ -7,6 +7,7 @@
 #include <format>
 #include <sstream>
 
+#include <lzma.h>
 #include <openssl/evp.h>
 #include <zlib.h>
 
@@ -387,6 +388,39 @@ std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data,
     return {};
 }
 
+std::vector<uint8_t> PsarcFile::decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize)
+{
+    if (data.empty())
+    {
+        return {};
+    }
+
+    std::vector<uint8_t> result(uncompressedSize);
+
+    lzma_stream strm = LZMA_STREAM_INIT;
+
+    if (lzma_alone_decoder(&strm, UINT64_MAX) != LZMA_OK)
+    {
+        return {};
+    }
+
+    strm.next_in = data.data();
+    strm.avail_in = data.size();
+    strm.next_out = result.data();
+    strm.avail_out = uncompressedSize;
+
+    const lzma_ret ret = lzma_code(&strm, LZMA_FINISH);
+    lzma_end(&strm);
+
+    if (ret == LZMA_STREAM_END || ret == LZMA_OK)
+    {
+        result.resize(uncompressedSize - strm.avail_out);
+        return result;
+    }
+
+    return {};
+}
+
 std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
 {
     if (index < 0 || index >= static_cast<int>(m_entries.size()))
@@ -439,7 +473,27 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
             const uint64_t remaining = entry.uncompressedSize - result.size();
             const uint64_t expectedSize = std::min(remaining, static_cast<uint64_t>(m_header.blockSize));
 
-            auto decompressed = decompressZlib(chunk, expectedSize);
+            std::vector<uint8_t> decompressed;
+            const std::string_view compression(m_header.compressionMethod, 4);
+
+            if (compression == "zlib")
+            {
+                decompressed = decompressZlib(chunk, expectedSize);
+            }
+            else if (compression == "lzma")
+            {
+                decompressed = decompressLZMA(chunk, expectedSize);
+            }
+            else
+            {
+                // Try zlib first, then lzma as fallback
+                decompressed = decompressZlib(chunk, expectedSize);
+                if (decompressed.empty())
+                {
+                    decompressed = decompressLZMA(chunk, expectedSize);
+                }
+            }
+
             if (!decompressed.empty())
             {
                 result.insert(result.end(), decompressed.begin(), decompressed.end());

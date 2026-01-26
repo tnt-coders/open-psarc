@@ -72,6 +72,7 @@ private:
     [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
     [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
     [[nodiscard]] static std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
+    [[nodiscard]] static std::vector<uint8_t> decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
     [[nodiscard]] std::vector<uint8_t> extractFileByIndex(int index);
 
     std::string m_filePath;
