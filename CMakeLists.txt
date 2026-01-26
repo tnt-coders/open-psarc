@@ -76,7 +76,7 @@ install(TARGETS open-psarc
 # Export targets for find_package support
 install(EXPORT open-psarc-targets
     FILE open-psarc-targets.cmake
-    NAMESPACE open-psarc::
+    NAMESPACE tnt::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/open-psarc
 )
 

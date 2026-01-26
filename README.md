@@ -92,7 +92,7 @@ After installing, use in your CMake project:
 
 ```cmake
 find_package(open-psarc REQUIRED)
-target_link_libraries(your_target PRIVATE open-psarc::open-psarc)
+target_link_libraries(your_target PRIVATE tnt::open-psarc)
 ```
 
 ## API Reference
