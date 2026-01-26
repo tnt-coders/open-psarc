@@ -6,26 +6,25 @@ project(open-psarc
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 option(OPEN_PSARC_BUILD_CLI "Build command-line interface" ON)
-option(BUILD_SHARED_LIBS "Build shared library" OFF)
+
+include(GNUInstallDirs)
 
 # Find dependencies
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-# Library target
-add_library(open-psarc
-    src/psarc_file.cpp
-)
+# Library
+add_library(open-psarc src/psarc_file.cpp)
+add_library(tnt::open-psarc ALIAS open-psarc)
+
+target_compile_features(open-psarc PUBLIC cxx_std_23)
 
 target_include_directories(open-psarc
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_link_libraries(open-psarc
@@ -39,19 +38,13 @@ target_link_libraries(open-psarc
 set_target_properties(open-psarc PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
-    PUBLIC_HEADER include/open-psarc/psarc_file.h
 )
 
-# CLI executable
+# CLI
 if(OPEN_PSARC_BUILD_CLI)
-    add_executable(open-psarc-cli
-        cli/main.cpp
-    )
+    add_executable(open-psarc-cli cli/main.cpp)
 
-    target_link_libraries(open-psarc-cli
-        PRIVATE
-            open-psarc
-    )
+    target_link_libraries(open-psarc-cli PRIVATE open-psarc)
 
     set_target_properties(open-psarc-cli PROPERTIES
         OUTPUT_NAME open-psarc
@@ -62,29 +55,29 @@ if(OPEN_PSARC_BUILD_CLI)
     )
 endif()
 
-# Install library
-include(GNUInstallDirs)
-
+# Install
 install(TARGETS open-psarc
     EXPORT open-psarc-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/open-psarc
 )
 
-# Export targets for find_package support
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
 install(EXPORT open-psarc-targets
     FILE open-psarc-targets.cmake
     NAMESPACE tnt::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/open-psarc
 )
 
-# Package config file
+# Package config
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/open-psarc-config.cmake.in
+    cmake/open-psarc-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/open-psarc-config.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/open-psarc
 )
