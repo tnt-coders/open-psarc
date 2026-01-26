@@ -18,17 +18,17 @@ find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 # Library target
-add_library(open-psarc-lib
+add_library(open-psarc
     src/psarc_file.cpp
 )
 
-target_include_directories(open-psarc-lib
+target_include_directories(open-psarc
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(open-psarc-lib
+target_link_libraries(open-psarc
     PRIVATE
         ZLIB::ZLIB
         LibLZMA::LibLZMA
@@ -36,8 +36,7 @@ target_link_libraries(open-psarc-lib
         OpenSSL::Crypto
 )
 
-set_target_properties(open-psarc-lib PROPERTIES
-    OUTPUT_NAME open-psarc
+set_target_properties(open-psarc PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER include/open-psarc/psarc_file.h
@@ -51,7 +50,7 @@ if(OPEN_PSARC_BUILD_CLI)
 
     target_link_libraries(open-psarc-cli
         PRIVATE
-            open-psarc-lib
+            open-psarc
     )
 
     set_target_properties(open-psarc-cli PROPERTIES
@@ -66,7 +65,7 @@ endif()
 # Install library
 include(GNUInstallDirs)
 
-install(TARGETS open-psarc-lib
+install(TARGETS open-psarc
     EXPORT open-psarc-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
