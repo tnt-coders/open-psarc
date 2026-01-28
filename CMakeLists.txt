@@ -8,8 +8,6 @@ project(open-psarc
 
 option(OPEN_PSARC_BUILD_CLI "Build command-line interface" ON)
 
-include(GNUInstallDirs)
-
 # Find dependencies
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
@@ -56,6 +54,8 @@ if(OPEN_PSARC_BUILD_CLI)
 endif()
 
 # Install
+include(GNUInstallDirs)
+
 install(TARGETS open-psarc
     EXPORT open-psarc-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
