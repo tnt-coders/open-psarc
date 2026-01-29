@@ -1,5 +1,5 @@
 #include <iostream>
-#include "psarc/psarc_file.h"
+#include <open-psarc/psarc_file.h>
 
 int main() {
     std::cout << "open-psarc library test successful!" << std::endl;
