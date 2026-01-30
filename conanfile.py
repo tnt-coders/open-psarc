@@ -41,11 +41,12 @@ class OpenPsarcConan(ConanFile):
         cmake_layout(self)
 
     def generate(self):
-        deps = CMakeDeps(self)
-        deps.generate()
         tc = CMakeToolchain(self)
         tc.variables["BUILD_CLI"] = self.options.build_cli
         tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
 
     def build(self):
         cmake = CMake(self)

@@ -34,7 +34,7 @@ target_link_libraries(OpenPSARC
 )
 
 # CLI
-if(OPEN_PSARC_BUILD_CLI)
+if(BUILD_CLI)
     package_add_executable(OpenPSARC_CLI cli/main.cpp)
 
     target_link_libraries(OpenPSARC_CLI PRIVATE OpenPSARC)
