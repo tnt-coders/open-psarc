@@ -3,7 +3,6 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.files import load
 import os
 
-
 class OpenPsarcConan(ConanFile):
     name = "open-psarc"
     license = "MIT"
