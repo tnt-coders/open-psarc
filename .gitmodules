@@ -1,0 +1,3 @@
+[submodule "cmake-package-manager"]
+	path = cmake-package-manager
+	url = https://github.com/tnt-coders/cmake-package-manager.git
