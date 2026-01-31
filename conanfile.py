@@ -21,7 +21,7 @@ class OpenPsarcConan(ConanFile):
         "fPIC": True,
         "build_cli": True,
     }
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cli/*", "cmake-package-builder/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cli/*", "cmake-package-manager/*"
 
     def config_options(self):
         if self.settings.os == "Windows":

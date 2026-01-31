@@ -9,9 +9,8 @@ find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-add_subdirectory(cmake-package-builder)
-
-package_create(CONAN_PACKAGE open-psarc)
+add_subdirectory(cmake-package-manager)
+package_create()
 
 # Library
 package_add_library(OpenPSARC src/psarc_file.cpp)
