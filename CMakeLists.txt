@@ -9,7 +9,9 @@ find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-add_subdirectory(cmake-package-manager)
+add_subdirectory(cmake-conan)
+include(PackageBuilder)
+
 package_create()
 
 # Library
