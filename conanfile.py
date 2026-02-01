@@ -42,6 +42,7 @@ class OpenPsarcConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_CLI"] = self.options.build_cli
+        tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.generate()
 
         deps = CMakeDeps(self)
