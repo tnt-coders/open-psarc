@@ -9,6 +9,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake-conan/conan_provider.cmake",
+        "CONAN_INSTALL_BUILD_CONFIGURATIONS": "Debug",
         "QT_CREATOR_SKIP_PACKAGE_MANAGER_SETUP": true
       }
     },
@@ -20,6 +21,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake-conan/conan_provider.cmake",
+        "CONAN_INSTALL_BUILD_CONFIGURATIONS": "Release",
         "QT_CREATOR_SKIP_PACKAGE_MANAGER_SETUP": true
       }
     }
