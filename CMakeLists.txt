@@ -5,11 +5,11 @@ project(OpenPSARC VERSION 1.0.0 LANGUAGES CXX)
 option(BUILD_CLI "Build command-line interface" ON)
 
 # Find dependencies
+find_package(PackageBuilder REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-add_subdirectory(cmake-conan)
 include(PackageBuilder)
 
 # Create the package
