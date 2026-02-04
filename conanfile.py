@@ -1,6 +1,5 @@
 from conan import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
-from conan.tools.files import load
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 import os
 
 class OpenPsarcConan(ConanFile):
@@ -21,7 +20,7 @@ class OpenPsarcConan(ConanFile):
         "fPIC": True,
         "build_cli": True,
     }
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cli/*", "cmake-package-manager/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cli/*"
 
     def config_options(self):
         if self.settings.os == "Windows":
