@@ -2,6 +2,10 @@
 
 A C++23 library and command-line tool for reading PSARC (PlayStation Archive) files, with support for Rocksmith-specific encryption.
 
+## ⚠️ Active Development Notice
+
+This project is under active development. The information in this README may not reflect the current state of the codebase. Please check the latest commits and issues for the most up-to-date information.
+
 ## Features
 
 - Read and extract PSARC archives
