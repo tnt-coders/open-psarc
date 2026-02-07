@@ -1,6 +1,6 @@
 # open-psarc
 
-[![CI](https://github.com/tnt-coders/open-psarc/actions/workflows/ci.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/ci.yml)
+[![Build](https://github.com/tnt-coders/open-psarc/actions/workflows/ci.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/ci.yml)
 
 A C++23 library and command-line tool for reading PSARC (PlayStation Archive) files, with support for Rocksmith-specific encryption.
 
