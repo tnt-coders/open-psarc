@@ -1,8 +1,8 @@
 {
   "version": 7,
   "include": [
-    "cmake-config/presets/default.json",
-    "cmake-config/presets/conan.json"
+    "project-config/cmake-presets/default.json",
+    "project-config/cmake-presets/conan.json"
   ],
   "configurePresets": [
     {

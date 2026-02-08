@@ -4,3 +4,6 @@
 [submodule "cmake-config"]
 	path = cmake-config
 	url = https://github.com/tnt-coders/cmake-config.git
+[submodule "project-config"]
+	path = project-config
+	url = https://github.com/tnt-coders/project-config.git
