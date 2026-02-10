@@ -1,11 +1,15 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.24)
 
 project(
     OpenPSARC
     VERSION 1.0.0
     LANGUAGES CXX)
 
+# Specify options
 option(BUILD_CLI "Build command-line interface" ON)
+
+# Add project configuration
+add_subdirectory(project-config)
 
 # Find dependencies
 find_package(PackageBuilder REQUIRED)

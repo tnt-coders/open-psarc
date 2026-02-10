@@ -23,6 +23,7 @@
     "buildPresets": [
         {
             "name": "debug",
+            "hidden": true,
             "configurePreset": "debug",
             "inherits": [
                 "default-debug",
@@ -31,6 +32,7 @@
         },
         {
             "name": "release",
+            "hidden": true,
             "configurePreset": "release",
             "inherits": [
                 "default-release",
@@ -41,6 +43,7 @@
     "testPresets": [
         {
             "name": "debug",
+            "hidden": true,
             "configurePreset": "debug",
             "inherits": [
                 "default-debug",
@@ -49,6 +52,7 @@
         },
         {
             "name": "release",
+            "hidden": true,
             "configurePreset": "release",
             "inherits": [
                 "default-release",
