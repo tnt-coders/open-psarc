@@ -23,6 +23,7 @@
     "buildPresets": [
         {
             "name": "debug",
+            "configurePreset": "debug",
             "inherits": [
                 "default-debug",
                 "conan-debug"
@@ -30,6 +31,7 @@
         },
         {
             "name": "release",
+            "configurePreset": "release",
             "inherits": [
                 "default-release",
                 "conan-release"
@@ -39,6 +41,7 @@
     "testPresets": [
         {
             "name": "debug",
+            "configurePreset": "debug",
             "inherits": [
                 "default-debug",
                 "conan-debug"
@@ -46,6 +49,7 @@
         },
         {
             "name": "release",
+            "configurePreset": "release",
             "inherits": [
                 "default-release",
                 "conan-release"
