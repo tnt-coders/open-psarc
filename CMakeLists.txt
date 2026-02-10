@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(OpenPSARC VERSION 1.0.0 LANGUAGES CXX)
+project(
+    OpenPSARC
+    VERSION 1.0.0
+    LANGUAGES CXX)
 
 option(BUILD_CLI "Build command-line interface" ON)
 
@@ -20,13 +23,7 @@ package_add_library(OpenPSARC src/psarc_file.cpp)
 
 target_compile_features(OpenPSARC PUBLIC cxx_std_23)
 
-target_link_libraries(OpenPSARC
-    PRIVATE
-        ZLIB::ZLIB
-        LibLZMA::LibLZMA
-        OpenSSL::SSL
-        OpenSSL::Crypto
-)
+target_link_libraries(OpenPSARC PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto)
 
 # CLI
 if(BUILD_CLI)
@@ -34,9 +31,7 @@ if(BUILD_CLI)
 
     target_link_libraries(OpenPSARC_CLI PRIVATE OpenPSARC)
 
-    set_target_properties(OpenPSARC_CLI PROPERTIES
-        OUTPUT_NAME open-psarc
-    )
+    set_target_properties(OpenPSARC_CLI PROPERTIES OUTPUT_NAME open-psarc)
 endif()
 
 package_install()

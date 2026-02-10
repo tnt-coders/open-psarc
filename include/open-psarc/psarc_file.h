@@ -10,13 +10,13 @@
 
 class PsarcException : public std::runtime_error
 {
-public:
+  public:
     using std::runtime_error::runtime_error;
 };
 
 class PsarcFile
 {
-public:
+  public:
     struct FileEntry
     {
         std::string name;
@@ -25,29 +25,35 @@ public:
         uint32_t startChunkIndex = 0;
     };
 
-    explicit PsarcFile(const std::string& filePath);
+    explicit PsarcFile(const std::string &filePath);
     ~PsarcFile();
 
-    PsarcFile(const PsarcFile&) = delete;
-    PsarcFile& operator=(const PsarcFile&) = delete;
-    PsarcFile(PsarcFile&&) noexcept = default;
-    PsarcFile& operator=(PsarcFile&&) noexcept = default;
+    PsarcFile(const PsarcFile &) = delete;
+    PsarcFile &operator=(const PsarcFile &) = delete;
+    PsarcFile(PsarcFile &&) noexcept = default;
+    PsarcFile &operator=(PsarcFile &&) noexcept = default;
 
     void open();
     void close();
-    [[nodiscard]] bool isOpen() const { return m_isOpen; }
+    [[nodiscard]] bool isOpen() const
+    {
+        return m_isOpen;
+    }
 
     [[nodiscard]] std::vector<std::string> getFileList() const;
-    [[nodiscard]] bool fileExists(const std::string& fileName) const;
-    [[nodiscard]] std::vector<uint8_t> extractFile(const std::string& fileName);
-    void extractFileTo(const std::string& fileName, const std::string& outputPath);
-    void extractAll(const std::string& outputDirectory);
+    [[nodiscard]] bool fileExists(const std::string &fileName) const;
+    [[nodiscard]] std::vector<uint8_t> extractFile(const std::string &fileName);
+    void extractFileTo(const std::string &fileName, const std::string &outputPath);
+    void extractAll(const std::string &outputDirectory);
 
-    [[nodiscard]] int getFileCount() const { return static_cast<int>(m_entries.size()); }
-    [[nodiscard]] const FileEntry* getEntry(int index) const;
-    [[nodiscard]] const FileEntry* getEntry(const std::string& fileName) const;
+    [[nodiscard]] int getFileCount() const
+    {
+        return static_cast<int>(m_entries.size());
+    }
+    [[nodiscard]] const FileEntry *getEntry(int index) const;
+    [[nodiscard]] const FileEntry *getEntry(const std::string &fileName) const;
 
-private:
+  private:
     struct Header
     {
         uint32_t magic = 0;
@@ -65,14 +71,16 @@ private:
     void readTOC();
     void readManifest();
 
-    void readBytes(void* dest, size_t count);
+    void readBytes(void *dest, size_t count);
     [[nodiscard]] uint16_t readBigEndian16();
     [[nodiscard]] uint32_t readBigEndian32();
 
-    [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t>& data);
-    [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t>& data);
-    [[nodiscard]] static std::vector<uint8_t> decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
-    [[nodiscard]] static std::vector<uint8_t> decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize);
+    [[nodiscard]] std::vector<uint8_t> decryptTOC(const std::vector<uint8_t> &data);
+    [[nodiscard]] std::vector<uint8_t> decryptSNG(const std::vector<uint8_t> &data);
+    [[nodiscard]] static std::vector<uint8_t> decompressZlib(const std::vector<uint8_t> &data,
+                                                             uint64_t uncompressedSize);
+    [[nodiscard]] static std::vector<uint8_t> decompressLZMA(const std::vector<uint8_t> &data,
+                                                             uint64_t uncompressedSize);
     [[nodiscard]] std::vector<uint8_t> extractFileByIndex(int index);
 
     std::string m_filePath;

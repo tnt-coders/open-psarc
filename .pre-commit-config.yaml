@@ -9,8 +9,3 @@ repos:
     hooks:
       - id: clang-format
         args: [--style=file:project-config/.clang-format]
-  - repo: https://github.com/cpp-linter/cpp-linter-hooks
-    rev: v0.6.1
-    hooks:
-      - id: clang-tidy
-        args: [--config-file=project-config/.clang-tidy, --compile-commands-dir=build]

@@ -5,28 +5,27 @@
 #include <format>
 #include <iostream>
 
-void printUsage(const char* programName)
+void printUsage(const char *programName)
 {
-    std::cout << std::format(
-        "Usage: {} [options] <psarc_file> [output_directory]\n"
-        "\n"
-        "A tool for reading and extracting PSARC archives.\n"
-        "\n"
-        "Arguments:\n"
-        "  psarc_file        Path to the .psarc file to open\n"
-        "  output_directory  Directory to extract files to (optional)\n"
-        "\n"
-        "Options:\n"
-        "  -h, --help        Show this help message\n"
-        "  -l, --list        List files only (don't extract)\n"
-        "  -q, --quiet       Suppress file listing during extraction\n"
-        "  -v, --version     Show version information\n"
-        "\n"
-        "Examples:\n"
-        "  {} archive.psarc              List archive contents\n"
-        "  {} archive.psarc ./output     Extract all files to ./output\n"
-        "  {} -q archive.psarc ./output  Extract quietly\n",
-        programName, programName, programName, programName);
+    std::cout << std::format("Usage: {} [options] <psarc_file> [output_directory]\n"
+                             "\n"
+                             "A tool for reading and extracting PSARC archives.\n"
+                             "\n"
+                             "Arguments:\n"
+                             "  psarc_file        Path to the .psarc file to open\n"
+                             "  output_directory  Directory to extract files to (optional)\n"
+                             "\n"
+                             "Options:\n"
+                             "  -h, --help        Show this help message\n"
+                             "  -l, --list        List files only (don't extract)\n"
+                             "  -q, --quiet       Suppress file listing during extraction\n"
+                             "  -v, --version     Show version information\n"
+                             "\n"
+                             "Examples:\n"
+                             "  {} archive.psarc              List archive contents\n"
+                             "  {} archive.psarc ./output     Extract all files to ./output\n"
+                             "  {} -q archive.psarc ./output  Extract quietly\n",
+                             programName, programName, programName, programName);
 }
 
 void printVersion()
@@ -34,12 +33,12 @@ void printVersion()
     std::cout << "open-psarc version 1.0.0\n";
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     bool listOnly = false;
     bool quiet = false;
-    const char* psarcPath = nullptr;
-    const char* outputDir = nullptr;
+    const char *psarcPath = nullptr;
+    const char *outputDir = nullptr;
 
     // Parse arguments
     for (int i = 1; i < argc; ++i)
@@ -106,9 +105,9 @@ int main(int argc, char* argv[])
         if (shouldList)
         {
             std::cout << "\n";
-            for (const auto& name : psarc.getFileList())
+            for (const auto &name : psarc.getFileList())
             {
-                if (const auto* entry = psarc.getEntry(name))
+                if (const auto *entry = psarc.getEntry(name))
                 {
                     std::cout << std::format("  {} ({} bytes)\n", name, entry->uncompressedSize);
                 }
@@ -128,7 +127,7 @@ int main(int argc, char* argv[])
                                      psarc.getFileCount(), duration.count());
         }
     }
-    catch (const PsarcException& e)
+    catch (const PsarcException &e)
     {
         std::cerr << std::format("Error: {}\n", e.what());
         return 1;

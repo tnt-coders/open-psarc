@@ -14,51 +14,42 @@
 namespace fs = std::filesystem;
 
 static constexpr std::array<uint8_t, 32> PSARC_KEY = {
-    0xC5, 0x3D, 0xB2, 0x38, 0x70, 0xA1, 0xA2, 0xF7,
-    0x1C, 0xAE, 0x64, 0x06, 0x1F, 0xDD, 0x0E, 0x11,
-    0x57, 0x30, 0x9D, 0xC8, 0x52, 0x04, 0xD4, 0xC5,
-    0xBF, 0xDF, 0x25, 0x09, 0x0D, 0xF2, 0x57, 0x2C
-};
+    0xC5, 0x3D, 0xB2, 0x38, 0x70, 0xA1, 0xA2, 0xF7, 0x1C, 0xAE, 0x64, 0x06, 0x1F, 0xDD, 0x0E, 0x11,
+    0x57, 0x30, 0x9D, 0xC8, 0x52, 0x04, 0xD4, 0xC5, 0xBF, 0xDF, 0x25, 0x09, 0x0D, 0xF2, 0x57, 0x2C};
 
 static constexpr std::array<uint8_t, 16> PSARC_IV = {
-    0xE9, 0x15, 0xAA, 0x01, 0x8F, 0xEF, 0x71, 0xFC,
-    0x50, 0x81, 0x32, 0xE4, 0xBB, 0x4C, 0xEB, 0x42
-};
+    0xE9, 0x15, 0xAA, 0x01, 0x8F, 0xEF, 0x71, 0xFC, 0x50, 0x81, 0x32, 0xE4, 0xBB, 0x4C, 0xEB, 0x42};
 
 static constexpr std::array<uint8_t, 32> SNG_KEY = {
-    0xCB, 0x64, 0x8D, 0xF3, 0xD1, 0x2A, 0x16, 0xBF,
-    0x71, 0x70, 0x14, 0x14, 0xE6, 0x96, 0x19, 0xEC,
-    0x17, 0x1C, 0xCA, 0x5D, 0x2A, 0x14, 0x2E, 0x3E,
-    0x59, 0xDE, 0x7A, 0xDD, 0xA1, 0x8A, 0x3A, 0x30
-};
+    0xCB, 0x64, 0x8D, 0xF3, 0xD1, 0x2A, 0x16, 0xBF, 0x71, 0x70, 0x14, 0x14, 0xE6, 0x96, 0x19, 0xEC,
+    0x17, 0x1C, 0xCA, 0x5D, 0x2A, 0x14, 0x2E, 0x3E, 0x59, 0xDE, 0x7A, 0xDD, 0xA1, 0x8A, 0x3A, 0x30};
 
 static constexpr uint32_t PSARC_MAGIC = 0x50534152;
 static constexpr uint32_t SNG_MAGIC = 0x4A;
 static constexpr uint32_t TOC_ENCRYPTED_FLAG = 0x04;
 static constexpr uint32_t SNG_COMPRESSED_FLAG = 0x01;
 
-[[nodiscard]] static constexpr uint16_t readLE16(const uint8_t* data) noexcept
+[[nodiscard]] static constexpr uint16_t readLE16(const uint8_t *data) noexcept
 {
     return static_cast<uint16_t>(data[0] | (data[1] << 8));
 }
 
-[[nodiscard]] static constexpr uint32_t readLE32(const uint8_t* data) noexcept
+[[nodiscard]] static constexpr uint32_t readLE32(const uint8_t *data) noexcept
 {
     return data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
 }
 
-[[nodiscard]] static constexpr uint16_t readBE16(const uint8_t* data) noexcept
+[[nodiscard]] static constexpr uint16_t readBE16(const uint8_t *data) noexcept
 {
     return static_cast<uint16_t>((data[0] << 8) | data[1]);
 }
 
-[[nodiscard]] static constexpr uint32_t readBE32(const uint8_t* data) noexcept
+[[nodiscard]] static constexpr uint32_t readBE32(const uint8_t *data) noexcept
 {
     return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
 }
 
-PsarcFile::PsarcFile(const std::string& filePath)
-    : m_filePath(filePath)
+PsarcFile::PsarcFile(const std::string &filePath) : m_filePath(filePath)
 {
 }
 
@@ -67,17 +58,17 @@ PsarcFile::~PsarcFile()
     close();
 }
 
-void PsarcFile::readBytes(void* dest, size_t count)
+void PsarcFile::readBytes(void *dest, size_t count)
 {
-    m_file->read(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count));
+    m_file->read(reinterpret_cast<char *>(dest), static_cast<std::streamsize>(count));
     if (!m_file->good() && !m_file->eof())
     {
         throw PsarcException("Failed to read from file");
     }
     if (static_cast<size_t>(m_file->gcount()) != count)
     {
-        throw PsarcException(std::format("Unexpected end of file: expected {} bytes, got {}",
-                                         count, m_file->gcount()));
+        throw PsarcException(std::format("Unexpected end of file: expected {} bytes, got {}", count,
+                                         m_file->gcount()));
     }
 }
 
@@ -127,7 +118,7 @@ void PsarcFile::close()
     m_isOpen = false;
 }
 
-const PsarcFile::FileEntry* PsarcFile::getEntry(int index) const
+const PsarcFile::FileEntry *PsarcFile::getEntry(int index) const
 {
     if (index < 0 || index >= static_cast<int>(m_entries.size()))
     {
@@ -136,7 +127,7 @@ const PsarcFile::FileEntry* PsarcFile::getEntry(int index) const
     return &m_entries[index];
 }
 
-const PsarcFile::FileEntry* PsarcFile::getEntry(const std::string& fileName) const
+const PsarcFile::FileEntry *PsarcFile::getEntry(const std::string &fileName) const
 {
     const auto it = m_fileMap.find(fileName);
     return (it != m_fileMap.end()) ? &m_entries[it->second] : nullptr;
@@ -163,12 +154,12 @@ void PsarcFile::readHeader()
 
     if (m_header.versionMajor != 1 || m_header.versionMinor != 4)
     {
-        throw PsarcException(std::format(
-            "Unsupported PSARC version: {}.{}", m_header.versionMajor, m_header.versionMinor));
+        throw PsarcException(std::format("Unsupported PSARC version: {}.{}", m_header.versionMajor,
+                                         m_header.versionMinor));
     }
 }
 
-std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& data)
+std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t> &data)
 {
     if (data.empty())
     {
@@ -181,20 +172,20 @@ std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& data)
 
     std::vector<uint8_t> output(paddedSize);
 
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx)
     {
         throw PsarcException("Failed to create cipher context");
     }
 
     int len = 0;
-    bool success = EVP_DecryptInit_ex(ctx, EVP_aes_256_cfb128(), nullptr,
-                                      PSARC_KEY.data(), PSARC_IV.data()) == 1;
+    bool success = EVP_DecryptInit_ex(ctx, EVP_aes_256_cfb128(), nullptr, PSARC_KEY.data(),
+                                      PSARC_IV.data()) == 1;
     if (success)
     {
         EVP_CIPHER_CTX_set_padding(ctx, 0);
-        success = EVP_DecryptUpdate(ctx, output.data(), &len,
-                                    input.data(), static_cast<int>(input.size())) == 1;
+        success = EVP_DecryptUpdate(ctx, output.data(), &len, input.data(),
+                                    static_cast<int>(input.size())) == 1;
     }
 
     EVP_CIPHER_CTX_free(ctx);
@@ -208,7 +199,7 @@ std::vector<uint8_t> PsarcFile::decryptTOC(const std::vector<uint8_t>& data)
     return output;
 }
 
-std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& data)
+std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t> &data)
 {
     if (data.size() < 24)
     {
@@ -220,11 +211,11 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& data)
     }
 
     const uint32_t flags = readLE32(data.data() + 4);
-    const uint8_t* iv = data.data() + 8;
+    const uint8_t *iv = data.data() + 8;
     std::vector<uint8_t> payload(data.begin() + 24, data.end());
     std::vector<uint8_t> decrypted(payload.size());
 
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx)
     {
         throw PsarcException("Failed to create cipher context");
@@ -235,8 +226,8 @@ std::vector<uint8_t> PsarcFile::decryptSNG(const std::vector<uint8_t>& data)
     if (success)
     {
         EVP_CIPHER_CTX_set_padding(ctx, 0);
-        success = EVP_DecryptUpdate(ctx, decrypted.data(), &len,
-                                    payload.data(), static_cast<int>(payload.size())) == 1;
+        success = EVP_DecryptUpdate(ctx, decrypted.data(), &len, payload.data(),
+                                    static_cast<int>(payload.size())) == 1;
     }
 
     EVP_CIPHER_CTX_free(ctx);
@@ -354,7 +345,8 @@ void PsarcFile::readManifest()
     }
 }
 
-std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data, uint64_t uncompressedSize)
+std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t> &data,
+                                               uint64_t uncompressedSize)
 {
     if (data.empty())
     {
@@ -369,7 +361,7 @@ std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data,
     {
         z_stream strm{};
         strm.avail_in = static_cast<uInt>(data.size());
-        strm.next_in = const_cast<Bytef*>(data.data());
+        strm.next_in = const_cast<Bytef *>(data.data());
         strm.avail_out = static_cast<uInt>(uncompressedSize);
         strm.next_out = result.data();
 
@@ -388,7 +380,8 @@ std::vector<uint8_t> PsarcFile::decompressZlib(const std::vector<uint8_t>& data,
     return {};
 }
 
-std::vector<uint8_t> PsarcFile::decompressLZMA(const std::vector<uint8_t>& data, uint64_t uncompressedSize)
+std::vector<uint8_t> PsarcFile::decompressLZMA(const std::vector<uint8_t> &data,
+                                               uint64_t uncompressedSize)
 {
     if (data.empty())
     {
@@ -428,7 +421,7 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
         throw PsarcException(std::format("Invalid entry index: {}", index));
     }
 
-    const auto& entry = m_entries[index];
+    const auto &entry = m_entries[index];
     if (entry.uncompressedSize == 0)
     {
         return {};
@@ -452,7 +445,8 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
         if (zLen == 0)
         {
             std::vector<uint8_t> block(m_header.blockSize);
-            m_file->read(reinterpret_cast<char*>(block.data()), static_cast<std::streamsize>(m_header.blockSize));
+            m_file->read(reinterpret_cast<char *>(block.data()),
+                         static_cast<std::streamsize>(m_header.blockSize));
             const auto bytesRead = static_cast<size_t>(m_file->gcount());
             if (bytesRead == 0 && !m_file->eof())
             {
@@ -464,14 +458,15 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
         else
         {
             std::vector<uint8_t> chunk(zLen);
-            m_file->read(reinterpret_cast<char*>(chunk.data()), zLen);
+            m_file->read(reinterpret_cast<char *>(chunk.data()), zLen);
             if (static_cast<size_t>(m_file->gcount()) != zLen)
             {
                 throw PsarcException("Failed to read compressed chunk");
             }
 
             const uint64_t remaining = entry.uncompressedSize - result.size();
-            const uint64_t expectedSize = std::min(remaining, static_cast<uint64_t>(m_header.blockSize));
+            const uint64_t expectedSize =
+                std::min(remaining, static_cast<uint64_t>(m_header.blockSize));
 
             std::vector<uint8_t> decompressed;
             const std::string_view compression(m_header.compressionMethod, 4);
@@ -507,8 +502,7 @@ std::vector<uint8_t> PsarcFile::extractFileByIndex(int index)
 
     result.resize(std::min(result.size(), static_cast<size_t>(entry.uncompressedSize)));
 
-    if (entry.name.find("songs/bin/generic/") != std::string::npos &&
-        entry.name.ends_with(".sng"))
+    if (entry.name.find("songs/bin/generic/") != std::string::npos && entry.name.ends_with(".sng"))
     {
         result = decryptSNG(result);
     }
@@ -521,7 +515,7 @@ std::vector<std::string> PsarcFile::getFileList() const
     std::vector<std::string> files;
     files.reserve(m_entries.size());
 
-    for (const auto& entry : m_entries)
+    for (const auto &entry : m_entries)
     {
         if (!entry.name.empty())
         {
@@ -532,12 +526,12 @@ std::vector<std::string> PsarcFile::getFileList() const
     return files;
 }
 
-bool PsarcFile::fileExists(const std::string& fileName) const
+bool PsarcFile::fileExists(const std::string &fileName) const
 {
     return m_fileMap.contains(fileName);
 }
 
-std::vector<uint8_t> PsarcFile::extractFile(const std::string& fileName)
+std::vector<uint8_t> PsarcFile::extractFile(const std::string &fileName)
 {
     const auto it = m_fileMap.find(fileName);
     if (it == m_fileMap.end())
@@ -547,7 +541,7 @@ std::vector<uint8_t> PsarcFile::extractFile(const std::string& fileName)
     return extractFileByIndex(it->second);
 }
 
-void PsarcFile::extractFileTo(const std::string& fileName, const std::string& outputPath)
+void PsarcFile::extractFileTo(const std::string &fileName, const std::string &outputPath)
 {
     const auto data = extractFile(fileName);
 
@@ -557,7 +551,8 @@ void PsarcFile::extractFileTo(const std::string& fileName, const std::string& ou
         throw PsarcException(std::format("Failed to create file: {}", outputPath));
     }
 
-    out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+    out.write(reinterpret_cast<const char *>(data.data()),
+              static_cast<std::streamsize>(data.size()));
 
     if (!out.good())
     {
@@ -565,7 +560,7 @@ void PsarcFile::extractFileTo(const std::string& fileName, const std::string& ou
     }
 }
 
-void PsarcFile::extractAll(const std::string& outputDirectory)
+void PsarcFile::extractAll(const std::string &outputDirectory)
 {
     fs::create_directories(outputDirectory);
 
@@ -573,7 +568,7 @@ void PsarcFile::extractAll(const std::string& outputDirectory)
 
     for (size_t i = 0; i < m_entries.size(); ++i)
     {
-        const auto& entry = m_entries[i];
+        const auto &entry = m_entries[i];
         if (entry.name.empty())
         {
             continue;
@@ -594,14 +589,15 @@ void PsarcFile::extractAll(const std::string& outputDirectory)
                 continue;
             }
 
-            out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+            out.write(reinterpret_cast<const char *>(data.data()),
+                      static_cast<std::streamsize>(data.size()));
 
             if (!out.good())
             {
                 failedFiles.push_back(std::format("{}: failed to write data", entry.name));
             }
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             failedFiles.push_back(std::format("{}: {}", entry.name, e.what()));
         }
@@ -610,7 +606,7 @@ void PsarcFile::extractAll(const std::string& outputDirectory)
     if (!failedFiles.empty())
     {
         std::string errorMsg = std::format("Failed to extract {} file(s):\n", failedFiles.size());
-        for (const auto& msg : failedFiles)
+        for (const auto &msg : failedFiles)
         {
             errorMsg += "  " + msg + "\n";
         }
