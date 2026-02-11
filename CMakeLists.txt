@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 project(
     OpenPSARC
     VERSION 1.0.0
-    LANGUAGES CXX)
+    LANGUAGES C CXX)
 
 # Specify options
 option(BUILD_CLI "Build command-line interface" ON)
