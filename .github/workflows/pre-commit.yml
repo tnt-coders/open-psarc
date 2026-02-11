@@ -1,0 +1,11 @@
+name: Pre-Commit
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  pre-commit:
+    uses: tnt-coders/ci-workflows/.github/workflows/cpp-cmake-conan-pre-commit.yml@master
