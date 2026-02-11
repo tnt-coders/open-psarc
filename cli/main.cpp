@@ -5,7 +5,7 @@
 #include <format>
 #include <iostream>
 
-void printUsage(const char *programName)
+void PrintUsage(const char* program_name)
 {
     std::cout << std::format("Usage: {} [options] <psarc_file> [output_directory]\n"
                              "\n"
@@ -25,37 +25,37 @@ void printUsage(const char *programName)
                              "  {} archive.psarc              List archive contents\n"
                              "  {} archive.psarc ./output     Extract all files to ./output\n"
                              "  {} -q archive.psarc ./output  Extract quietly\n",
-                             programName, programName, programName, programName);
+                             program_name, program_name, program_name, program_name);
 }
 
-void printVersion()
+void PrintVersion()
 {
     std::cout << "open-psarc version 1.0.0\n";
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    bool listOnly = false;
+    bool list_only = false;
     bool quiet = false;
-    const char *psarcPath = nullptr;
-    const char *outputDir = nullptr;
+    const char* psarc_path = nullptr;
+    const char* output_dir = nullptr;
 
     // Parse arguments
     for (int i = 1; i < argc; ++i)
     {
         if (std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help") == 0)
         {
-            printUsage(argv[0]);
+            PrintUsage(argv[0]);
             return 0;
         }
         if (std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--version") == 0)
         {
-            printVersion();
+            PrintVersion();
             return 0;
         }
         if (std::strcmp(argv[i], "-l") == 0 || std::strcmp(argv[i], "--list") == 0)
         {
-            listOnly = true;
+            list_only = true;
             continue;
         }
         if (std::strcmp(argv[i], "-q") == 0 || std::strcmp(argv[i], "--quiet") == 0)
@@ -70,64 +70,64 @@ int main(int argc, char *argv[])
         }
 
         // Positional arguments
-        if (!psarcPath)
+        if (!psarc_path)
         {
-            psarcPath = argv[i];
+            psarc_path = argv[i];
         }
-        else if (!outputDir)
+        else if (!output_dir)
         {
-            outputDir = argv[i];
+            output_dir = argv[i];
         }
         else
         {
             std::cerr << "Too many arguments\n";
-            printUsage(argv[0]);
+            PrintUsage(argv[0]);
             return 1;
         }
     }
 
-    if (!psarcPath)
+    if (!psarc_path)
     {
-        printUsage(argv[0]);
+        PrintUsage(argv[0]);
         return 1;
     }
 
     try
     {
-        PsarcFile psarc(psarcPath);
-        psarc.open();
+        PsarcFile psarc(psarc_path);
+        psarc.Open();
 
-        std::cout << std::format("Archive: {}\n", psarcPath);
-        std::cout << std::format("Files: {}\n", psarc.getFileCount());
+        std::cout << std::format("Archive: {}\n", psarc_path);
+        std::cout << std::format("Files: {}\n", psarc.GetFileCount());
 
-        const bool shouldList = listOnly || !outputDir || !quiet;
+        const bool should_list = list_only || !output_dir || !quiet;
 
-        if (shouldList)
+        if (should_list)
         {
             std::cout << "\n";
-            for (const auto &name : psarc.getFileList())
+            for (const auto& name : psarc.GetFileList())
             {
-                if (const auto *entry = psarc.getEntry(name))
+                if (const auto* entry = psarc.GetEntry(name))
                 {
-                    std::cout << std::format("  {} ({} bytes)\n", name, entry->uncompressedSize);
+                    std::cout << std::format("  {} ({} bytes)\n", name, entry->m_uncompressed_size);
                 }
             }
         }
 
-        if (outputDir && !listOnly)
+        if (output_dir && !list_only)
         {
-            std::cout << std::format("\nExtracting to: {}\n", outputDir);
+            std::cout << std::format("\nExtracting to: {}\n", output_dir);
 
             const auto start = std::chrono::steady_clock::now();
-            psarc.extractAll(outputDir);
+            psarc.ExtractAll(output_dir);
             const auto end = std::chrono::steady_clock::now();
 
             const auto duration = std::chrono::duration<double, std::milli>(end - start);
             std::cout << std::format("Successfully extracted {} files in {:.2f} ms\n",
-                                     psarc.getFileCount(), duration.count());
+                                     psarc.GetFileCount(), duration.count());
         }
     }
-    catch (const PsarcException &e)
+    catch (const PsarcException& e)
     {
         std::cerr << std::format("Error: {}\n", e.what());
         return 1;
