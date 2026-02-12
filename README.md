@@ -105,20 +105,20 @@ target_link_libraries(your_target PRIVATE tnt::open-psarc)
 
 ### `PsarcFile`
 
-| Method | Description |
-|--------|-------------|
-| `PsarcFile(const std::string& path)` | Construct with path to .psarc file |
-| `void open()` | Open and parse the archive |
-| `void close()` | Close the archive |
-| `bool isOpen() const` | Check if archive is open |
-| `std::vector<std::string> getFileList() const` | Get list of all file names |
-| `bool fileExists(const std::string& name) const` | Check if file exists in archive |
-| `std::vector<uint8_t> extractFile(const std::string& name)` | Extract file to memory |
-| `void extractFileTo(const std::string& name, const std::string& path)` | Extract file to disk |
-| `void extractAll(const std::string& directory)` | Extract all files to directory |
-| `int getFileCount() const` | Get number of files in archive |
-| `const FileEntry* getEntry(int index) const` | Get entry by index |
-| `const FileEntry* getEntry(const std::string& name) const` | Get entry by name |
+| Method                                                                 | Description                        |
+|------------------------------------------------------------------------|------------------------------------|
+| `PsarcFile(const std::string& path)`                                   | Construct with path to .psarc file |
+| `void open()`                                                          | Open and parse the archive         |
+| `void close()`                                                         | Close the archive                  |
+| `bool isOpen() const`                                                  | Check if archive is open           |
+| `std::vector<std::string> getFileList() const`                         | Get list of all file names         |
+| `bool fileExists(const std::string& name) const`                       | Check if file exists in archive    |
+| `std::vector<uint8_t> extractFile(const std::string& name)`            | Extract file to memory             |
+| `void extractFileTo(const std::string& name, const std::string& path)` | Extract file to disk               |
+| `void extractAll(const std::string& directory)`                        | Extract all files to directory     |
+| `int getFileCount() const`                                             | Get number of files in archive     |
+| `const FileEntry* getEntry(int index) const`                           | Get entry by index                 |
+| `const FileEntry* getEntry(const std::string& name) const`             | Get entry by name                  |
 
 ### `PsarcException`
 
