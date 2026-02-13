@@ -32,7 +32,7 @@ void PrintVersion()
     std::println("open-psarc version 1.0.0");
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
 {
     try
     {
