@@ -55,7 +55,14 @@ PsarcFile::PsarcFile(std::string file_path) : m_file_path(std::move(file_path))
 
 PsarcFile::~PsarcFile()
 {
-    Close();
+    try
+    {
+        Close();
+    }
+    catch (...)
+    {
+        // Prevent exceptions from escaping the destructor (undefined behavior)
+    }
 }
 
 void PsarcFile::ReadBytes(void* dest, size_t count)

@@ -132,6 +132,11 @@ int main(int argc, char* argv[])
         std::cerr << std::format("Error: {}\n", e.what());
         return 1;
     }
+    catch (const std::exception& e)
+    {
+        std::cerr << std::format("Unexpected error: {}\n", e.what());
+        return 1;
+    }
 
     return 0;
 }
