@@ -58,9 +58,8 @@ PsarcFile::~PsarcFile() = default;
 
 void PsarcFile::ReadBytes(void* dest, size_t count)
 {
-    m_file->read(
-        reinterpret_cast<char*>(dest), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-        static_cast<std::streamsize>(count));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    m_file->read(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count));
     if (!m_file->good() && !m_file->eof())
     {
         throw PsarcException("Failed to read from file");
@@ -362,7 +361,8 @@ std::vector<uint8_t> PsarcFile::DecompressZlib(const std::vector<uint8_t>& data,
         z_stream strm{};
         strm.avail_in = static_cast<uInt>(data.size());
         strm.next_in =
-            const_cast<Bytef*>(data.data()); // NOLINT(cppcoreguidelines-pro-type-const-cast)
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+            const_cast<Bytef*>(data.data());
         strm.avail_out = static_cast<uInt>(uncompressed_size);
         strm.next_out = result.data();
 
@@ -446,8 +446,8 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
         if (z_len == 0)
         {
             std::vector<uint8_t> block(m_header.m_block_size);
-            m_file->read(reinterpret_cast<char*>(
-                             block.data()), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+            m_file->read(reinterpret_cast<char*>(block.data()),
                          static_cast<std::streamsize>(m_header.m_block_size));
             const auto bytes_read = static_cast<size_t>(m_file->gcount());
             if (bytes_read == 0 && !m_file->eof())
@@ -460,8 +460,8 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
         else
         {
             std::vector<uint8_t> chunk(z_len);
-            m_file->read(reinterpret_cast<char*>(chunk.data()),
-                         z_len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+            m_file->read(reinterpret_cast<char*>(chunk.data()), z_len);
             if (std::cmp_not_equal(m_file->gcount(), z_len))
             {
                 throw PsarcException("Failed to read compressed chunk");
@@ -556,8 +556,8 @@ void PsarcFile::ExtractFileTo(const std::string& file_name, const std::string& o
         throw PsarcException(std::format("Failed to create file: {}", output_path));
     }
 
-    out.write(reinterpret_cast<const char*>(
-                  data.data()), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    out.write(reinterpret_cast<const char*>(data.data()),
               static_cast<std::streamsize>(data.size()));
 
     if (!out.good())
@@ -595,8 +595,8 @@ void PsarcFile::ExtractAll(const std::string& output_directory)
                 continue;
             }
 
-            out.write(reinterpret_cast<const char*>(
-                          data.data()), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+            out.write(reinterpret_cast<const char*>(data.data()),
                       static_cast<std::streamsize>(data.size()));
 
             if (!out.good())
