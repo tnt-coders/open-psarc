@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <memory>
@@ -59,7 +60,7 @@ class PsarcFile
         uint32_t m_magic = 0;
         uint16_t m_version_major = 0;
         uint16_t m_version_minor = 0;
-        char m_compression_method[4] = {0};
+        std::array<char, 4> m_compression_method = {};
         uint32_t m_toc_length = 0;
         uint32_t m_toc_entry_size = 0;
         uint32_t m_num_files = 0;

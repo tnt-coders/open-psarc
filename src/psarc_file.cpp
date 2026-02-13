@@ -4,6 +4,7 @@
 #include <array>
 #include <filesystem>
 #include <format>
+#include <print>
 #include <sstream>
 #include <utility>
 
@@ -59,9 +60,13 @@ PsarcFile::~PsarcFile()
     {
         Close();
     }
+    catch (const std::exception& e)
+    {
+        std::println(stderr, "Error closing PSARC file: {}", e.what());
+    }
     catch (...)
     {
-        // Prevent exceptions from escaping the destructor (undefined behavior)
+        std::println(stderr, "Unknown error closing PSARC file");
     }
 }
 
@@ -152,7 +157,7 @@ void PsarcFile::ReadHeader()
 
     m_header.m_version_major = ReadBigEndian16();
     m_header.m_version_minor = ReadBigEndian16();
-    ReadBytes(m_header.m_compression_method, sizeof(m_header.m_compression_method));
+    ReadBytes(m_header.m_compression_method.data(), m_header.m_compression_method.size());
     m_header.m_toc_length = ReadBigEndian32();
     m_header.m_toc_entry_size = ReadBigEndian32();
     m_header.m_num_files = ReadBigEndian32();
@@ -476,7 +481,8 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
                 std::min(remaining, static_cast<uint64_t>(m_header.m_block_size));
 
             std::vector<uint8_t> decompressed;
-            const std::string_view compression(m_header.m_compression_method, 4);
+            const std::string_view compression(m_header.m_compression_method.data(),
+                                               m_header.m_compression_method.size());
 
             if (compression == "zlib")
             {
