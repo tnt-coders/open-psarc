@@ -6,7 +6,7 @@ project(
     VERSION 1.0.0
     LANGUAGES C CXX)
 
-# Configure the project
+# Add project config
 add_subdirectory(project-config)
 
 # Specify options

@@ -13,14 +13,12 @@ class OpenPsarcConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "build_cli": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "build_cli": True,
     }
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cli/*"
+    exports_sources = "CMakeLists.txt", "project-config/*", "src/*", "include/*"
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -41,7 +39,7 @@ class OpenPsarcConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_CLI"] = self.options.build_cli
+        tc.variables["BUILD_CLI"] = False
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.generate()
 
