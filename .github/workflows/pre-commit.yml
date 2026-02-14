@@ -8,4 +8,4 @@ on:
 
 jobs:
   pre-commit:
-    uses: tnt-coders/ci-workflows/.github/workflows/cpp-cmake-conan-pre-commit.yml@master
+    uses: tnt-coders/ci-workflows/.github/workflows/pre-commit.yml@master
