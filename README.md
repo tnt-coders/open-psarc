@@ -126,7 +126,3 @@ target_link_libraries(your_target PRIVATE tnt::open-psarc)
 ### `PsarcException`
 
 Thrown on any error. Inherits from `std::runtime_error`.
-
-## License
-
-MIT
