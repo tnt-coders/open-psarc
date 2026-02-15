@@ -1,4 +1,4 @@
-name: Pre-Commit
+name: Validate
 
 on:
   push:
@@ -7,5 +7,5 @@ on:
     branches: [master]
 
 jobs:
-  pre-commit:
+  validate:
     uses: tnt-coders/ci-workflows/.github/workflows/pre-commit.yml@master
