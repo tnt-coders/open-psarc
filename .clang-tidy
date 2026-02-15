@@ -28,7 +28,7 @@ Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
 
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 
 HeaderFilterRegex: '.*(?<!/(ui_|moc_|qrc_)).*\.h$'
 
