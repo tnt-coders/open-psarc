@@ -7,7 +7,8 @@
 #   Classes/Structs/Types:      CamelCase            (MyClass)
 #   Functions/Methods:          CamelCase            (MyFunction)
 #   Local variables/params:     lower_case           (my_variable)
-#   Member variables:           lower_case           (m_my_member)
+#   Class member variables:     lower_case           (m_my_member)
+#   Struct/public members:      lower_case           (my_member)
 #   Global/static constants:    lower_case           (g_my_constant)
 #   Classic enum values:        UPPER_CASE           (MY_VALUE)
 #   Scoped enum class values:   CamelCase            (MyValue)
@@ -30,7 +31,7 @@ Checks: >
 
 WarningsAsErrors: '*'
 
-HeaderFilterRegex: '.*(?<!/(ui_|moc_|qrc_)).*\.h$'
+HeaderFilterRegex: '.*'
 
 CheckOptions:
   # --------------------------------------------------------------------------
@@ -102,12 +103,12 @@ CheckOptions:
     value: lower_case
 
   # --------------------------------------------------------------------------
-  # Member Variables (m_ prefix, camelBack)
+  # Member Variables (m_ prefix for private/protected, no prefix for public)
   # --------------------------------------------------------------------------
   - key: readability-identifier-naming.MemberCase
     value: lower_case
   - key: readability-identifier-naming.MemberPrefix
-    value: m_
+    value: ''
   - key: readability-identifier-naming.ClassMemberCase
     value: lower_case
   - key: readability-identifier-naming.ClassMemberPrefix
@@ -123,11 +124,11 @@ CheckOptions:
   - key: readability-identifier-naming.PublicMemberCase
     value: lower_case
   - key: readability-identifier-naming.PublicMemberPrefix
-    value: m_
+    value: ''
   - key: readability-identifier-naming.ConstantMemberCase
     value: lower_case
   - key: readability-identifier-naming.ConstantMemberPrefix
-    value: m_
+    value: ''
 
   # --------------------------------------------------------------------------
   # Global / Static Constants (g_ prefix, lower_case)
