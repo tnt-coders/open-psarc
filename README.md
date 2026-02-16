@@ -1,6 +1,6 @@
 # open-psarc
 
-[![Verify](https://github.com/tnt-coders/open-psarc/actions/workflows/verify.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/verify.yml)
+[![Pre-Commit](https://github.com/tnt-coders/open-psarc/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/pre-commit.yml)
 [![Build](https://github.com/tnt-coders/open-psarc/actions/workflows/build.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/build.yml)
 [![Package](https://github.com/tnt-coders/open-psarc/actions/workflows/package.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/package.yml)
 
