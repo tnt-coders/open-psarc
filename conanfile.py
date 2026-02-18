@@ -40,6 +40,8 @@ class OpenPsarcConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_CLI"] = False
+        tc.variables["PROJECT_CONFIG_ENABLE_DOCS"] = False
+        tc.variables["PROJECT_CONFIG_ENABLE_CLANG_TIDY"] = False
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.generate()
 

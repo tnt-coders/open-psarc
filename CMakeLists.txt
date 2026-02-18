@@ -6,11 +6,14 @@ project(
     VERSION 1.0.0
     LANGUAGES C CXX)
 
-# Add project config
-add_subdirectory(project-config)
-
 # Specify options
 option(BUILD_CLI "Build command-line interface" ON)
+option(PROJECT_CONFIG_ENABLE_CLANG_TIDY
+       "Enable clang-tidy target generation from project-config when run-clang-tidy is available"
+       ON)
+
+# Add project config
+add_subdirectory(project-config)
 
 # Find dependencies
 find_package(PackageBuilder REQUIRED)
