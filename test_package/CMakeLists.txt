@@ -5,7 +5,3 @@ find_package(OpenPSARC REQUIRED CONFIG)
 
 add_executable(test_package test_package.cpp)
 target_link_libraries(test_package OpenPSARC::OpenPSARC)
-target_compile_features(test_package PRIVATE cxx_std_23)
-
-enable_testing()
-add_test(NAME test_package COMMAND test_package)

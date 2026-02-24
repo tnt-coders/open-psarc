@@ -4,16 +4,26 @@ cmake_minimum_required(VERSION 3.24)
 project(
     OpenPSARC
     VERSION 1.0.0
+    DESCRIPTION "Open source library to extract PSARC files"
     LANGUAGES C CXX)
+
+# CMAKE_CXX_STANDARD must be set explicitly for Conan to detect it
+set(CMAKE_CXX_STANDARD 23)
 
 # Specify options
 option(BUILD_CLI "Build command-line interface" ON)
-option(PROJECT_CONFIG_ENABLE_CLANG_TIDY
-       "Enable clang-tidy target generation from project-config when run-clang-tidy is available"
-       ON)
 
-# Add project config
-add_subdirectory(project-config)
+# Add project configuration (disabled for Conan builds where project-config is not exported)
+option(INCLUDE_PROJECT_CONFIG "Include project-config for docs, linting, and CMake presets" ON)
+if(INCLUDE_PROJECT_CONFIG)
+
+    # Set project-config specific options
+    option(PROJECT_CONFIG_ENABLE_DOCS "Enable docs target when Doxygen is available" ON)
+    option(PROJECT_CONFIG_ENABLE_CLANG_TIDY
+           "Enable clang-tidy target when run-clang-tidy is available" ON)
+
+    add_subdirectory(project-config)
+endif()
 
 # Find dependencies
 find_package(PackageBuilder REQUIRED)
