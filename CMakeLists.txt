@@ -27,6 +27,7 @@ endif()
 
 # Find dependencies
 find_package(PackageBuilder REQUIRED)
+find_package(WwiseAudioTools REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -41,7 +42,10 @@ package_add_library(OpenPSARC src/psarc_file.cpp)
 
 target_compile_features(OpenPSARC PUBLIC cxx_std_23)
 
-target_link_libraries(OpenPSARC PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(
+    OpenPSARC
+    PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto
+    PUBLIC WwiseAudioTools::WwiseAudioTools)
 
 # CLI
 if(BUILD_CLI)

@@ -46,6 +46,7 @@ class PsarcFile
     [[nodiscard]] std::vector<uint8_t> ExtractFile(const std::string& file_name);
     void ExtractFileTo(const std::string& file_name, const std::string& output_path);
     void ExtractAll(const std::string& output_directory);
+    void ConvertAudio(const std::string& output_directory);
 
     [[nodiscard]] int GetFileCount() const
     {

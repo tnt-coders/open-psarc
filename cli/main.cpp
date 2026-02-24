@@ -15,10 +15,11 @@ void PrintUsage(const char* program_name)
                "  output_directory  Directory to extract files to (optional)\n"
                "\n"
                "Options:\n"
-               "  -h, --help        Show this help message\n"
-               "  -l, --list        List files only (don't extract)\n"
-               "  -q, --quiet       Suppress file listing during extraction\n"
-               "  -v, --version     Show version information\n"
+               "  -c, --convert-audio  Convert .wem/.bnk audio to .ogg after extraction\n"
+               "  -h, --help           Show this help message\n"
+               "  -l, --list           List files only (don't extract)\n"
+               "  -q, --quiet          Suppress file listing during extraction\n"
+               "  -v, --version        Show version information\n"
                "\n"
                "Examples:\n"
                "  {} archive.psarc              List archive contents\n"
@@ -36,6 +37,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
 {
     try
     {
+        bool convert_audio = false;
         bool list_only = false;
         bool quiet = false;
         const char* psarc_path = nullptr;
@@ -53,6 +55,11 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
             {
                 PrintVersion();
                 return 0;
+            }
+            if (std::strcmp(argv[i], "-c") == 0 || std::strcmp(argv[i], "--convert-audio") == 0)
+            {
+                convert_audio = true;
+                continue;
             }
             if (std::strcmp(argv[i], "-l") == 0 || std::strcmp(argv[i], "--list") == 0)
             {
@@ -124,6 +131,19 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
             const auto duration = std::chrono::duration<double, std::milli>(end - start);
             std::println("Successfully extracted {} files in {:.2f} ms", psarc.GetFileCount(),
                          duration.count());
+
+            if (convert_audio)
+            {
+                std::println("\nConverting audio files...");
+
+                const auto audio_start = std::chrono::steady_clock::now();
+                psarc.ConvertAudio(output_dir);
+                const auto audio_end = std::chrono::steady_clock::now();
+
+                const auto audio_duration =
+                    std::chrono::duration<double, std::milli>(audio_end - audio_start);
+                std::println("Audio conversion completed in {:.2f} ms", audio_duration.count());
+            }
         }
     }
     catch (const PsarcException& e)

@@ -10,6 +10,7 @@
 
 #include <lzma.h>
 #include <openssl/evp.h>
+#include <wwtools/wwtools.h>
 #include <zlib.h>
 
 namespace fs = std::filesystem;
@@ -613,6 +614,190 @@ void PsarcFile::ExtractAll(const std::string& output_directory)
     if (!failed_files.empty())
     {
         std::string error_msg = std::format("Failed to extract {} file(s):\n", failed_files.size());
+        for (const auto& msg : failed_files)
+        {
+            error_msg += "  " + msg + "\n";
+        }
+        throw PsarcException(error_msg);
+    }
+}
+
+void PsarcFile::ConvertAudio(const std::string& output_directory)
+{
+    fs::create_directories(output_directory);
+
+    // Track which WEM IDs are referenced by BNK files so we don't convert them twice
+    std::unordered_map<std::string, bool> referenced_wems;
+
+    // Collect BNK and WEM files from the archive
+    std::vector<std::string> bnk_files;
+    std::vector<std::string> wem_files;
+
+    for (const auto& entry : m_entries)
+    {
+        if (entry.m_name.empty())
+        {
+            continue;
+        }
+
+        if (entry.m_name.ends_with(".bnk"))
+        {
+            bnk_files.push_back(entry.m_name);
+        }
+        else if (entry.m_name.ends_with(".wem"))
+        {
+            wem_files.push_back(entry.m_name);
+        }
+    }
+
+    std::vector<std::string> failed_files;
+
+    // Process BNK files
+    for (const auto& bnk_name : bnk_files)
+    {
+        try
+        {
+            const auto bnk_data = ExtractFile(bnk_name);
+            const std::string_view bnk_view(
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                reinterpret_cast<const char*>(bnk_data.data()), bnk_data.size());
+            const auto entries = wwtools::BnkExtract(bnk_view);
+
+            // Use the BNK stem as the song name
+            const fs::path bnk_path(bnk_name);
+            const std::string song_name = bnk_path.stem().string();
+
+            for (size_t i = 0; i < entries.size(); ++i)
+            {
+                const auto& bnk_entry = entries[i];
+
+                try
+                {
+                    std::string wem_data;
+
+                    if (bnk_entry.streamed)
+                    {
+                        // Find the corresponding WEM file in the archive by ID
+                        const std::string wem_id = std::to_string(bnk_entry.id);
+                        std::string found_wem;
+
+                        for (const auto& wem_name : wem_files)
+                        {
+                            if (fs::path(wem_name).stem().string() == wem_id)
+                            {
+                                found_wem = wem_name;
+                                break;
+                            }
+                        }
+
+                        if (found_wem.empty())
+                        {
+                            failed_files.push_back(
+                                std::format("{}: streamed WEM {} not found in archive", bnk_name,
+                                            bnk_entry.id));
+                            continue;
+                        }
+
+                        referenced_wems[found_wem] = true;
+                        const auto raw = ExtractFile(found_wem);
+                        wem_data.assign(
+                            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                            reinterpret_cast<const char*>(raw.data()), raw.size());
+                    }
+                    else
+                    {
+                        wem_data = bnk_entry.data;
+                    }
+
+                    if (wem_data.empty())
+                    {
+                        continue;
+                    }
+
+                    const auto ogg_data = wwtools::Wem2Ogg(wem_data);
+
+                    // Name the OGG after the song (BNK stem), with a suffix if multiple entries
+                    std::string ogg_name = song_name;
+                    if (entries.size() > 1)
+                    {
+                        ogg_name += std::format("_{}", i);
+                    }
+                    ogg_name += ".ogg";
+
+                    const fs::path ogg_path = fs::path(output_directory) / ogg_name;
+                    fs::create_directories(ogg_path.parent_path());
+
+                    std::ofstream out(ogg_path, std::ios::binary);
+                    if (!out)
+                    {
+                        failed_files.push_back(std::format("{}: failed to create file", ogg_name));
+                        continue;
+                    }
+
+                    out.write(ogg_data.data(), static_cast<std::streamsize>(ogg_data.size()));
+                    if (!out.good())
+                    {
+                        failed_files.push_back(std::format("{}: failed to write data", ogg_name));
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    failed_files.push_back(
+                        std::format("{} (WEM {}): {}", bnk_name, bnk_entry.id, e.what()));
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            failed_files.push_back(std::format("{}: {}", bnk_name, e.what()));
+        }
+    }
+
+    // Convert standalone WEM files not referenced by any BNK
+    for (const auto& wem_name : wem_files)
+    {
+        if (referenced_wems.contains(wem_name))
+        {
+            continue;
+        }
+
+        try
+        {
+            const auto raw = ExtractFile(wem_name);
+            const std::string_view wem_view(
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                reinterpret_cast<const char*>(raw.data()), raw.size());
+            const auto ogg_data = wwtools::Wem2Ogg(wem_view);
+
+            const fs::path wem_path(wem_name);
+            const std::string ogg_name = wem_path.stem().string() + ".ogg";
+            const fs::path ogg_path =
+                fs::path(output_directory) / wem_path.parent_path() / ogg_name;
+            fs::create_directories(ogg_path.parent_path());
+
+            std::ofstream out(ogg_path, std::ios::binary);
+            if (!out)
+            {
+                failed_files.push_back(std::format("{}: failed to create file", ogg_name));
+                continue;
+            }
+
+            out.write(ogg_data.data(), static_cast<std::streamsize>(ogg_data.size()));
+            if (!out.good())
+            {
+                failed_files.push_back(std::format("{}: failed to write data", ogg_name));
+            }
+        }
+        catch (const std::exception& e)
+        {
+            failed_files.push_back(std::format("{}: {}", wem_name, e.what()));
+        }
+    }
+
+    if (!failed_files.empty())
+    {
+        std::string error_msg =
+            std::format("Failed to convert {} audio file(s):\n", failed_files.size());
         for (const auto& msg : failed_files)
         {
             error_msg += "  " + msg + "\n";
