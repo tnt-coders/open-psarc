@@ -724,7 +724,8 @@ void PsarcFile::ConvertAudio(const std::string& output_directory)
                     }
                     ogg_name += ".ogg";
 
-                    const fs::path ogg_path = fs::path(output_directory) / ogg_name;
+                    const fs::path ogg_path =
+                        fs::path(output_directory) / bnk_path.parent_path() / ogg_name;
                     fs::create_directories(ogg_path.parent_path());
 
                     std::ofstream out(ogg_path, std::ios::binary);
