@@ -8,6 +8,9 @@
 #include <sstream>
 #include <utility>
 
+#include "sng_parser.h"
+#include "sng_xml_writer.h"
+
 #include <lzma.h>
 #include <openssl/evp.h>
 #include <wwtools/wwtools.h>
@@ -799,6 +802,57 @@ void PsarcFile::ConvertAudio(const std::string& output_directory)
     {
         std::string error_msg =
             std::format("Failed to convert {} audio file(s):\n", failed_files.size());
+        for (const auto& msg : failed_files)
+        {
+            error_msg += "  " + msg + "\n";
+        }
+        throw PsarcException(error_msg);
+    }
+}
+
+void PsarcFile::ConvertSng(const std::string& output_directory)
+{
+    fs::create_directories(output_directory);
+
+    // Collect SNG files from songs/bin/generic/
+    std::vector<std::string> sng_files;
+    for (const auto& entry : m_entries)
+    {
+        if (entry.m_name.find("songs/bin/generic/") != std::string::npos &&
+            entry.m_name.ends_with(".sng"))
+        {
+            sng_files.push_back(entry.m_name);
+        }
+    }
+
+    std::vector<std::string> failed_files;
+
+    for (const auto& sng_name : sng_files)
+    {
+        try
+        {
+            const auto data = ExtractFile(sng_name);
+
+            const auto sng_data = SngParser::Parse(data);
+
+            // Output path: songs/bin/generic/foo.sng -> {output_dir}/songs/arr/foo.xml
+            const fs::path sng_path(sng_name);
+            const std::string xml_name = sng_path.stem().string() + ".xml";
+            const fs::path xml_path = fs::path(output_directory) / "songs" / "arr" / xml_name;
+            fs::create_directories(xml_path.parent_path());
+
+            SngXmlWriter::Write(sng_data, xml_path);
+        }
+        catch (const std::exception& e)
+        {
+            failed_files.push_back(std::format("{}: {}", sng_name, e.what()));
+        }
+    }
+
+    if (!failed_files.empty())
+    {
+        std::string error_msg =
+            std::format("Failed to convert {} SNG file(s):\n", failed_files.size());
         for (const auto& msg : failed_files)
         {
             error_msg += "  " + msg + "\n";

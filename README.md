@@ -2,24 +2,23 @@
 
 [![Build](https://github.com/tnt-coders/open-psarc/actions/workflows/build.yml/badge.svg)](https://github.com/tnt-coders/open-psarc/actions/workflows/build.yml)
 
-A C++23 library and command-line tool for reading PSARC (PlayStation Archive) files, with support for Rocksmith-specific encryption.
+A C++23 library and command-line tool for reading and extracting PSARC (PlayStation Archive) files, with specialized support for **Rocksmith 2014** — including TOC/SNG decryption, WEM-to-OGG audio conversion, and SNG-to-XML arrangement conversion.
 
-## ⚠️ Active Development Notice
-
-This project is under active development. The information in this README may not reflect the current state of the codebase. Please check the latest commits and issues for the most up-to-date information.
+Generic PSARC extraction works for any PSARC archive; the conversion tools (audio and SNG) are Rocksmith 2014-specific.
 
 ## Features
 
-- Read and extract PSARC archives
-- Support for zlib and LZMA compression
-- Automatic decryption of Rocksmith TOC and SNG files
-- Available as both a library and CLI tool
+- Read and extract PSARC archives (zlib and LZMA compression)
+- Automatic decryption of Rocksmith 2014 TOC and SNG files
+- WEM/BNK to OGG audio conversion
+- SNG binary to XML arrangement conversion
+- Available as both a C++ library and CLI tool
 
 ## Building
 
 ### Prerequisites
 
-- CMake 3.16+
+- CMake 3.24+
 - C++23 compatible compiler
 - Conan 2.x (for dependency management)
 
@@ -27,17 +26,13 @@ This project is under active development. The information in this README may not
 
 ```bash
 # Install dependencies
-conan install . --output-folder=build --build=missing
+conan install . --output-folder=build/debug --build=missing
 
 # Configure
-cmake --preset conan-release
-# or for debug: cmake --preset conan-debug
+cmake --preset conan-debug      # or conan-release
 
 # Build
-cmake --build build --config Release
-
-# Install (optional)
-cmake --install build --prefix /usr/local
+cmake --build build/debug       # or build/release
 ```
 
 ## Usage
@@ -51,11 +46,20 @@ open-psarc archive.psarc
 # Extract all files
 open-psarc archive.psarc ./output
 
+# Extract with audio conversion (WEM/BNK -> OGG)
+open-psarc -a archive.psarc ./output
+
+# Extract with SNG arrangement conversion (SNG -> XML)
+open-psarc -s archive.psarc ./output
+
+# Extract with both conversions
+open-psarc -a -s archive.psarc ./output
+
 # Extract quietly (no file listing)
 open-psarc -q archive.psarc ./output
 
-# List only (don't extract even if output dir given)
-open-psarc -l archive.psarc ./output
+# List only (don't extract)
+open-psarc -l archive.psarc
 ```
 
 ### Library
@@ -68,23 +72,29 @@ int main()
     try
     {
         PsarcFile psarc("archive.psarc");
-        psarc.open();
+        psarc.Open();
 
         // List files
-        for (const auto& name : psarc.getFileList())
+        for (const auto& name : psarc.GetFileList())
         {
-            std::cout << name << "\n";
+            std::println("{}", name);
         }
 
-        // Extract a single file
-        auto data = psarc.extractFile("path/to/file.txt");
+        // Extract a single file to memory
+        auto data = psarc.ExtractFile("path/to/file.txt");
 
-        // Extract all files
-        psarc.extractAll("./output");
+        // Extract all files to disk
+        psarc.ExtractAll("./output");
+
+        // Convert audio (Rocksmith 2014)
+        psarc.ConvertAudio("./output");
+
+        // Convert SNG arrangements to XML (Rocksmith 2014)
+        psarc.ConvertSng("./output");
     }
     catch (const PsarcException& e)
     {
-        std::cerr << "Error: " << e.what() << "\n";
+        std::println(stderr, "Error: {}", e.what());
         return 1;
     }
 
@@ -94,31 +104,31 @@ int main()
 
 ### CMake Integration
 
-After installing, use in your CMake project:
-
 ```cmake
-find_package(open-psarc REQUIRED)
-target_link_libraries(your_target PRIVATE tnt::open-psarc)
+find_package(OpenPSARC REQUIRED)
+target_link_libraries(your_target PRIVATE OpenPSARC::OpenPSARC)
 ```
 
 ## API Reference
 
 ### `PsarcFile`
 
-| Method                                                                 | Description                        |
-|------------------------------------------------------------------------|------------------------------------|
-| `PsarcFile(const std::string& path)`                                   | Construct with path to .psarc file |
-| `void open()`                                                          | Open and parse the archive         |
-| `void close()`                                                         | Close the archive                  |
-| `bool isOpen() const`                                                  | Check if archive is open           |
-| `std::vector<std::string> getFileList() const`                         | Get list of all file names         |
-| `bool fileExists(const std::string& name) const`                       | Check if file exists in archive    |
-| `std::vector<uint8_t> extractFile(const std::string& name)`            | Extract file to memory             |
-| `void extractFileTo(const std::string& name, const std::string& path)` | Extract file to disk               |
-| `void extractAll(const std::string& directory)`                        | Extract all files to directory     |
-| `int getFileCount() const`                                             | Get number of files in archive     |
-| `const FileEntry* getEntry(int index) const`                           | Get entry by index                 |
-| `const FileEntry* getEntry(const std::string& name) const`             | Get entry by name                  |
+| Method | Description |
+|--------|-------------|
+| `PsarcFile(std::string path)` | Construct with path to .psarc file |
+| `void Open()` | Open and parse the archive |
+| `void Close()` | Close the archive |
+| `bool IsOpen() const` | Check if archive is open |
+| `std::vector<std::string> GetFileList() const` | Get list of all file names |
+| `bool FileExists(const std::string& name) const` | Check if file exists in archive |
+| `std::vector<uint8_t> ExtractFile(const std::string& name)` | Extract file to memory |
+| `void ExtractFileTo(const std::string& name, const std::string& path)` | Extract file to disk |
+| `void ExtractAll(const std::string& directory)` | Extract all files to directory |
+| `void ConvertAudio(const std::string& directory)` | Convert WEM/BNK audio to OGG |
+| `void ConvertSng(const std::string& directory)` | Convert SNG arrangements to XML |
+| `int GetFileCount() const` | Get number of files in archive |
+| `const FileEntry* GetEntry(int index) const` | Get entry by index |
+| `const FileEntry* GetEntry(const std::string& name) const` | Get entry by name |
 
 ### `PsarcException`
 

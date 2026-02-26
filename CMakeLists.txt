@@ -31,6 +31,7 @@ find_package(WwiseAudioTools REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(pugixml REQUIRED)
 
 include(PackageBuilder)
 
@@ -38,13 +39,13 @@ include(PackageBuilder)
 package_create()
 
 # Library
-package_add_library(OpenPSARC src/psarc_file.cpp)
+package_add_library(OpenPSARC src/psarc_file.cpp src/sng_parser.cpp src/sng_xml_writer.cpp)
 
 target_compile_features(OpenPSARC PUBLIC cxx_std_23)
 
 target_link_libraries(
     OpenPSARC
-    PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto
+    PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto pugixml::pugixml
     PUBLIC WwiseAudioTools::WwiseAudioTools)
 
 # CLI
@@ -57,3 +58,9 @@ if(BUILD_CLI)
 endif()
 
 package_install()
+
+# Tests
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

@@ -34,6 +34,10 @@ class OpenPsarcConan(ConanFile):
         self.requires("zlib/1.3.1")
         self.requires("xz_utils/5.8.1")
         self.requires("openssl/3.6.1")
+        self.requires("pugixml/1.14")
+
+    def build_requirements(self):
+        self.test_requires("catch2/3.6.0")
 
     def layout(self):
         cmake_layout(self)
@@ -41,6 +45,7 @@ class OpenPsarcConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_CLI"] = False
+        tc.variables["BUILD_TESTING"] = False
         tc.variables["INCLUDE_PROJECT_CONFIG"] = False
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.generate()

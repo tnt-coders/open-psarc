@@ -8,23 +8,24 @@ void PrintUsage(const char* program_name)
 {
     std::print("Usage: {} [options] <psarc_file> [output_directory]\n"
                "\n"
-               "A tool for reading and extracting PSARC archives.\n"
+               "A tool for reading and extracting Rocksmith 2014 PSARC archives.\n"
                "\n"
                "Arguments:\n"
                "  psarc_file        Path to the .psarc file to open\n"
                "  output_directory  Directory to extract files to (optional)\n"
                "\n"
                "Options:\n"
-               "  -c, --convert-audio  Convert .wem/.bnk audio to .ogg after extraction\n"
+               "  -a, --convert-audio  Convert .wem/.bnk audio to .ogg after extraction\n"
                "  -h, --help           Show this help message\n"
                "  -l, --list           List files only (don't extract)\n"
                "  -q, --quiet          Suppress file listing during extraction\n"
+               "  -s, --convert-sng    Convert .sng arrangements to .xml after extraction\n"
                "  -v, --version        Show version information\n"
                "\n"
                "Examples:\n"
                "  {} archive.psarc              List archive contents\n"
                "  {} archive.psarc ./output     Extract all files to ./output\n"
-               "  {} -q archive.psarc ./output  Extract quietly\n",
+               "  {} -a -s archive.psarc ./out  Extract with audio and SNG conversion\n",
                program_name, program_name, program_name, program_name);
 }
 
@@ -38,6 +39,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
     try
     {
         bool convert_audio = false;
+        bool convert_sng = false;
         bool list_only = false;
         bool quiet = false;
         const char* psarc_path = nullptr;
@@ -56,9 +58,14 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
                 PrintVersion();
                 return 0;
             }
-            if (std::strcmp(argv[i], "-c") == 0 || std::strcmp(argv[i], "--convert-audio") == 0)
+            if (std::strcmp(argv[i], "-a") == 0 || std::strcmp(argv[i], "--convert-audio") == 0)
             {
                 convert_audio = true;
+                continue;
+            }
+            if (std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--convert-sng") == 0)
+            {
+                convert_sng = true;
                 continue;
             }
             if (std::strcmp(argv[i], "-l") == 0 || std::strcmp(argv[i], "--list") == 0)
@@ -143,6 +150,19 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
                 const auto audio_duration =
                     std::chrono::duration<double, std::milli>(audio_end - audio_start);
                 std::println("Audio conversion completed in {:.2f} ms", audio_duration.count());
+            }
+
+            if (convert_sng)
+            {
+                std::println("\nConverting SNG arrangements to XML...");
+
+                const auto sng_start = std::chrono::steady_clock::now();
+                psarc.ConvertSng(output_dir);
+                const auto sng_end = std::chrono::steady_clock::now();
+
+                const auto sng_duration =
+                    std::chrono::duration<double, std::milli>(sng_end - sng_start);
+                std::println("SNG conversion completed in {:.2f} ms", sng_duration.count());
             }
         }
     }
