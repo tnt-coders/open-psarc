@@ -9,54 +9,54 @@
 
 struct SngManifestArrangementProperties
 {
-    int m_represent = 0;
-    int m_bonus_arr = 0;
-    int m_standard_tuning = 0;
-    int m_non_standard_chords = 0;
-    int m_barre_chords = 0;
-    int m_power_chords = 0;
-    int m_drop_d_power = 0;
-    int m_open_chords = 0;
-    int m_finger_picking = 0;
-    int m_pick_direction = 0;
-    int m_double_stops = 0;
-    int m_palm_mutes = 0;
-    int m_harmonics = 0;
-    int m_pinch_harmonics = 0;
-    int m_hopo = 0;
-    int m_tremolo = 0;
-    int m_slides = 0;
-    int m_unpitched_slides = 0;
-    int m_bends = 0;
-    int m_tapping = 0;
-    int m_vibrato = 0;
-    int m_fret_hand_mutes = 0;
-    int m_slap_pop = 0;
-    int m_two_finger_picking = 0;
-    int m_fifths_and_octaves = 0;
-    int m_syncopation = 0;
-    int m_bass_pick = 0;
-    int m_sustain = 0;
-    int m_path_lead = 0;
-    int m_path_rhythm = 0;
-    int m_path_bass = 0;
+    int represent = 0;
+    int bonus_arr = 0;
+    int standard_tuning = 0;
+    int non_standard_chords = 0;
+    int barre_chords = 0;
+    int power_chords = 0;
+    int drop_d_power = 0;
+    int open_chords = 0;
+    int finger_picking = 0;
+    int pick_direction = 0;
+    int double_stops = 0;
+    int palm_mutes = 0;
+    int harmonics = 0;
+    int pinch_harmonics = 0;
+    int hopo = 0;
+    int tremolo = 0;
+    int slides = 0;
+    int unpitched_slides = 0;
+    int bends = 0;
+    int tapping = 0;
+    int vibrato = 0;
+    int fret_hand_mutes = 0;
+    int slap_pop = 0;
+    int two_finger_picking = 0;
+    int fifths_and_octaves = 0;
+    int syncopation = 0;
+    int bass_pick = 0;
+    int sustain = 0;
+    int path_lead = 0;
+    int path_rhythm = 0;
+    int path_bass = 0;
 };
 
 struct SngManifestMetadata
 {
-    std::optional<std::string> m_title;
-    std::optional<std::string> m_arrangement;
-    std::optional<float> m_cent_offset;
-    std::optional<std::string> m_song_name_sort;
-    std::optional<float> m_average_tempo;
-    std::optional<std::string> m_artist_name;
-    std::optional<std::string> m_artist_name_sort;
-    std::optional<std::string> m_album_name;
-    std::optional<std::string> m_album_name_sort;
-    std::optional<int> m_album_year;
-    std::optional<SngManifestArrangementProperties> m_arrangement_properties;
-    std::optional<std::string> m_tone_base;
-    std::array<std::optional<std::string>, 4> m_tone_names;
+    std::optional<std::string> title;
+    std::optional<std::string> arrangement;
+    std::optional<float> cent_offset;
+    std::optional<std::string> song_name_sort;
+    std::optional<float> average_tempo;
+    std::optional<std::string> artist_name;
+    std::optional<std::string> artist_name_sort;
+    std::optional<std::string> album_name;
+    std::optional<std::string> album_name_sort;
+    std::optional<int> album_year;
+    std::optional<SngManifestArrangementProperties> arrangement_properties;
+    std::optional<std::string> tone_base;
+    std::array<std::optional<std::string>, 4> tone_names;
 };
 
 class SngXmlWriter

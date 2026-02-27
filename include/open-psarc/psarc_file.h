@@ -20,10 +20,10 @@ class PsarcFile
   public:
     struct FileEntry
     {
-        std::string m_name;
-        uint64_t m_offset = 0;
-        uint64_t m_uncompressed_size = 0;
-        uint32_t m_start_chunk_index = 0;
+        std::string name;
+        uint64_t offset = 0;
+        uint64_t uncompressed_size = 0;
+        uint32_t start_chunk_index = 0;
     };
 
     explicit PsarcFile(std::string file_path);
@@ -59,15 +59,15 @@ class PsarcFile
   private:
     struct Header
     {
-        uint32_t m_magic = 0;
-        uint16_t m_version_major = 0;
-        uint16_t m_version_minor = 0;
-        std::array<char, 4> m_compression_method = {};
-        uint32_t m_toc_length = 0;
-        uint32_t m_toc_entry_size = 0;
-        uint32_t m_num_files = 0;
-        uint32_t m_block_size = 0;
-        uint32_t m_archive_flags = 0;
+        uint32_t magic = 0;
+        uint16_t version_major = 0;
+        uint16_t version_minor = 0;
+        std::array<char, 4> compression_method = {};
+        uint32_t toc_length = 0;
+        uint32_t toc_entry_size = 0;
+        uint32_t num_files = 0;
+        uint32_t block_size = 0;
+        uint32_t archive_flags = 0;
     };
 
     void ReadHeader();

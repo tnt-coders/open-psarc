@@ -47,8 +47,8 @@ target_compile_features(OpenPSARC PUBLIC cxx_std_23)
 
 target_link_libraries(
     OpenPSARC
-    PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto pugixml::pugixml
-            nlohmann_json::nlohmann_json
+    PRIVATE LibLZMA::LibLZMA nlohmann_json::nlohmann_json OpenSSL::SSL OpenSSL::Crypto
+            pugixml::pugixml ZLIB::ZLIB
     PUBLIC WwiseAudioTools::WwiseAudioTools)
 
 # CLI

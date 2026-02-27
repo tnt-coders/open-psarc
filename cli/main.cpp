@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
             {
                 if (const auto* entry = psarc.GetEntry(name))
                 {
-                    std::println("  {} ({} bytes)", name, entry->m_uncompressed_size);
+                    std::println("  {} ({} bytes)", name, entry->uncompressed_size);
                 }
             }
         }

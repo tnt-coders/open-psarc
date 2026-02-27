@@ -174,64 +174,62 @@ SngManifestMetadata ParseManifestMetadata(const std::string& json_text)
         return metadata;
     }
 
-    metadata.m_title = ReadJsonValue<std::string>(*source, {"SongName", "songName"});
-    metadata.m_arrangement =
+    metadata.title = ReadJsonValue<std::string>(*source, {"SongName", "songName"});
+    metadata.arrangement =
         ReadJsonValue<std::string>(*source, {"ArrangementName", "arrangementName"});
-    metadata.m_cent_offset = ReadJsonValue<float>(*source, {"CentOffset", "centOffset"});
-    metadata.m_song_name_sort =
-        ReadJsonValue<std::string>(*source, {"SongNameSort", "songNameSort"});
-    metadata.m_average_tempo =
+    metadata.cent_offset = ReadJsonValue<float>(*source, {"CentOffset", "centOffset"});
+    metadata.song_name_sort = ReadJsonValue<std::string>(*source, {"SongNameSort", "songNameSort"});
+    metadata.average_tempo =
         ReadJsonValue<float>(*source, {"SongAverageTempo", "songAverageTempo"});
-    metadata.m_artist_name = ReadJsonValue<std::string>(*source, {"ArtistName", "artistName"});
-    metadata.m_artist_name_sort =
+    metadata.artist_name = ReadJsonValue<std::string>(*source, {"ArtistName", "artistName"});
+    metadata.artist_name_sort =
         ReadJsonValue<std::string>(*source, {"ArtistNameSort", "artistNameSort"});
-    metadata.m_album_name = ReadJsonValue<std::string>(*source, {"AlbumName", "albumName"});
-    metadata.m_album_name_sort =
+    metadata.album_name = ReadJsonValue<std::string>(*source, {"AlbumName", "albumName"});
+    metadata.album_name_sort =
         ReadJsonValue<std::string>(*source, {"AlbumNameSort", "albumNameSort"});
-    metadata.m_album_year = ReadJsonValue<int>(*source, {"SongYear", "songYear"});
-    metadata.m_tone_base = ReadJsonValue<std::string>(*source, {"Tone_Base", "toneBase"});
-    metadata.m_tone_names[0] = ReadJsonValue<std::string>(*source, {"Tone_A", "toneA"});
-    metadata.m_tone_names[1] = ReadJsonValue<std::string>(*source, {"Tone_B", "toneB"});
-    metadata.m_tone_names[2] = ReadJsonValue<std::string>(*source, {"Tone_C", "toneC"});
-    metadata.m_tone_names[3] = ReadJsonValue<std::string>(*source, {"Tone_D", "toneD"});
+    metadata.album_year = ReadJsonValue<int>(*source, {"SongYear", "songYear"});
+    metadata.tone_base = ReadJsonValue<std::string>(*source, {"Tone_Base", "toneBase"});
+    metadata.tone_names[0] = ReadJsonValue<std::string>(*source, {"Tone_A", "toneA"});
+    metadata.tone_names[1] = ReadJsonValue<std::string>(*source, {"Tone_B", "toneB"});
+    metadata.tone_names[2] = ReadJsonValue<std::string>(*source, {"Tone_C", "toneC"});
+    metadata.tone_names[3] = ReadJsonValue<std::string>(*source, {"Tone_D", "toneD"});
 
     const auto* props = FindJsonKey(*source, {"ArrangementProperties", "arrangementProperties"});
     if (props && props->is_object())
     {
         SngManifestArrangementProperties parsed;
-        parsed.m_represent = ReadJsonValue<int>(*props, {"represent"}).value_or(0);
-        parsed.m_bonus_arr = ReadJsonValue<int>(*props, {"bonusArr"}).value_or(0);
-        parsed.m_standard_tuning = ReadJsonValue<int>(*props, {"standardTuning"}).value_or(0);
-        parsed.m_non_standard_chords =
-            ReadJsonValue<int>(*props, {"nonStandardChords"}).value_or(0);
-        parsed.m_barre_chords = ReadJsonValue<int>(*props, {"barreChords"}).value_or(0);
-        parsed.m_power_chords = ReadJsonValue<int>(*props, {"powerChords"}).value_or(0);
-        parsed.m_drop_d_power = ReadJsonValue<int>(*props, {"dropDPower"}).value_or(0);
-        parsed.m_open_chords = ReadJsonValue<int>(*props, {"openChords"}).value_or(0);
-        parsed.m_finger_picking = ReadJsonValue<int>(*props, {"fingerPicking"}).value_or(0);
-        parsed.m_pick_direction = ReadJsonValue<int>(*props, {"pickDirection"}).value_or(0);
-        parsed.m_double_stops = ReadJsonValue<int>(*props, {"doubleStops"}).value_or(0);
-        parsed.m_palm_mutes = ReadJsonValue<int>(*props, {"palmMutes"}).value_or(0);
-        parsed.m_harmonics = ReadJsonValue<int>(*props, {"harmonics"}).value_or(0);
-        parsed.m_pinch_harmonics = ReadJsonValue<int>(*props, {"pinchHarmonics"}).value_or(0);
-        parsed.m_hopo = ReadJsonValue<int>(*props, {"hopo"}).value_or(0);
-        parsed.m_tremolo = ReadJsonValue<int>(*props, {"tremolo"}).value_or(0);
-        parsed.m_slides = ReadJsonValue<int>(*props, {"slides"}).value_or(0);
-        parsed.m_unpitched_slides = ReadJsonValue<int>(*props, {"unpitchedSlides"}).value_or(0);
-        parsed.m_bends = ReadJsonValue<int>(*props, {"bends"}).value_or(0);
-        parsed.m_tapping = ReadJsonValue<int>(*props, {"tapping"}).value_or(0);
-        parsed.m_vibrato = ReadJsonValue<int>(*props, {"vibrato"}).value_or(0);
-        parsed.m_fret_hand_mutes = ReadJsonValue<int>(*props, {"fretHandMutes"}).value_or(0);
-        parsed.m_slap_pop = ReadJsonValue<int>(*props, {"slapPop"}).value_or(0);
-        parsed.m_two_finger_picking = ReadJsonValue<int>(*props, {"twoFingerPicking"}).value_or(0);
-        parsed.m_fifths_and_octaves = ReadJsonValue<int>(*props, {"fifthsAndOctaves"}).value_or(0);
-        parsed.m_syncopation = ReadJsonValue<int>(*props, {"syncopation"}).value_or(0);
-        parsed.m_bass_pick = ReadJsonValue<int>(*props, {"bassPick"}).value_or(0);
-        parsed.m_sustain = ReadJsonValue<int>(*props, {"sustain"}).value_or(0);
-        parsed.m_path_lead = ReadJsonValue<int>(*props, {"pathLead"}).value_or(0);
-        parsed.m_path_rhythm = ReadJsonValue<int>(*props, {"pathRhythm"}).value_or(0);
-        parsed.m_path_bass = ReadJsonValue<int>(*props, {"pathBass"}).value_or(0);
-        metadata.m_arrangement_properties = parsed;
+        parsed.represent = ReadJsonValue<int>(*props, {"represent"}).value_or(0);
+        parsed.bonus_arr = ReadJsonValue<int>(*props, {"bonusArr"}).value_or(0);
+        parsed.standard_tuning = ReadJsonValue<int>(*props, {"standardTuning"}).value_or(0);
+        parsed.non_standard_chords = ReadJsonValue<int>(*props, {"nonStandardChords"}).value_or(0);
+        parsed.barre_chords = ReadJsonValue<int>(*props, {"barreChords"}).value_or(0);
+        parsed.power_chords = ReadJsonValue<int>(*props, {"powerChords"}).value_or(0);
+        parsed.drop_d_power = ReadJsonValue<int>(*props, {"dropDPower"}).value_or(0);
+        parsed.open_chords = ReadJsonValue<int>(*props, {"openChords"}).value_or(0);
+        parsed.finger_picking = ReadJsonValue<int>(*props, {"fingerPicking"}).value_or(0);
+        parsed.pick_direction = ReadJsonValue<int>(*props, {"pickDirection"}).value_or(0);
+        parsed.double_stops = ReadJsonValue<int>(*props, {"doubleStops"}).value_or(0);
+        parsed.palm_mutes = ReadJsonValue<int>(*props, {"palmMutes"}).value_or(0);
+        parsed.harmonics = ReadJsonValue<int>(*props, {"harmonics"}).value_or(0);
+        parsed.pinch_harmonics = ReadJsonValue<int>(*props, {"pinchHarmonics"}).value_or(0);
+        parsed.hopo = ReadJsonValue<int>(*props, {"hopo"}).value_or(0);
+        parsed.tremolo = ReadJsonValue<int>(*props, {"tremolo"}).value_or(0);
+        parsed.slides = ReadJsonValue<int>(*props, {"slides"}).value_or(0);
+        parsed.unpitched_slides = ReadJsonValue<int>(*props, {"unpitchedSlides"}).value_or(0);
+        parsed.bends = ReadJsonValue<int>(*props, {"bends"}).value_or(0);
+        parsed.tapping = ReadJsonValue<int>(*props, {"tapping"}).value_or(0);
+        parsed.vibrato = ReadJsonValue<int>(*props, {"vibrato"}).value_or(0);
+        parsed.fret_hand_mutes = ReadJsonValue<int>(*props, {"fretHandMutes"}).value_or(0);
+        parsed.slap_pop = ReadJsonValue<int>(*props, {"slapPop"}).value_or(0);
+        parsed.two_finger_picking = ReadJsonValue<int>(*props, {"twoFingerPicking"}).value_or(0);
+        parsed.fifths_and_octaves = ReadJsonValue<int>(*props, {"fifthsAndOctaves"}).value_or(0);
+        parsed.syncopation = ReadJsonValue<int>(*props, {"syncopation"}).value_or(0);
+        parsed.bass_pick = ReadJsonValue<int>(*props, {"bassPick"}).value_or(0);
+        parsed.sustain = ReadJsonValue<int>(*props, {"sustain"}).value_or(0);
+        parsed.path_lead = ReadJsonValue<int>(*props, {"pathLead"}).value_or(0);
+        parsed.path_rhythm = ReadJsonValue<int>(*props, {"pathRhythm"}).value_or(0);
+        parsed.path_bass = ReadJsonValue<int>(*props, {"pathBass"}).value_or(0);
+        metadata.arrangement_properties = parsed;
     }
 
     return metadata;
@@ -244,8 +242,8 @@ bool IsLikelyManifestFile(std::string_view path)
 
 std::string ToLower(std::string value)
 {
-    std::transform(value.begin(), value.end(), value.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::ranges::transform(value, value.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return value;
 }
 
@@ -334,26 +332,26 @@ const PsarcFile::FileEntry* PsarcFile::GetEntry(const std::string& file_name) co
 void PsarcFile::ReadHeader()
 {
     m_file->seekg(0);
-    m_header.m_magic = ReadBigEndian32();
+    m_header.magic = ReadBigEndian32();
 
-    if (m_header.m_magic != g_psarc_magic)
+    if (m_header.magic != g_psarc_magic)
     {
         throw PsarcException("Invalid PSARC file: wrong magic number");
     }
 
-    m_header.m_version_major = ReadBigEndian16();
-    m_header.m_version_minor = ReadBigEndian16();
-    ReadBytes(m_header.m_compression_method.data(), m_header.m_compression_method.size());
-    m_header.m_toc_length = ReadBigEndian32();
-    m_header.m_toc_entry_size = ReadBigEndian32();
-    m_header.m_num_files = ReadBigEndian32();
-    m_header.m_block_size = ReadBigEndian32();
-    m_header.m_archive_flags = ReadBigEndian32();
+    m_header.version_major = ReadBigEndian16();
+    m_header.version_minor = ReadBigEndian16();
+    ReadBytes(m_header.compression_method.data(), m_header.compression_method.size());
+    m_header.toc_length = ReadBigEndian32();
+    m_header.toc_entry_size = ReadBigEndian32();
+    m_header.num_files = ReadBigEndian32();
+    m_header.block_size = ReadBigEndian32();
+    m_header.archive_flags = ReadBigEndian32();
 
-    if (m_header.m_version_major != 1 || m_header.m_version_minor != 4)
+    if (m_header.version_major != 1 || m_header.version_minor != 4)
     {
-        throw PsarcException(std::format("Unsupported PSARC version: {}.{}",
-                                         m_header.m_version_major, m_header.m_version_minor));
+        throw PsarcException(std::format("Unsupported PSARC version: {}.{}", m_header.version_major,
+                                         m_header.version_minor));
     }
 }
 
@@ -449,10 +447,10 @@ std::vector<uint8_t> PsarcFile::DecryptSng(const std::vector<uint8_t>& data)
 
 void PsarcFile::ReadToc()
 {
-    const bool encrypted = (m_header.m_archive_flags & g_toc_encrypted_flag) != 0;
+    const bool encrypted = (m_header.archive_flags & g_toc_encrypted_flag) != 0;
 
     m_file->seekg(32);
-    std::vector<uint8_t> toc_data(m_header.m_toc_length - 32);
+    std::vector<uint8_t> toc_data(m_header.toc_length - 32);
     ReadBytes(toc_data.data(), toc_data.size());
 
     if (encrypted)
@@ -460,7 +458,7 @@ void PsarcFile::ReadToc()
         toc_data = DecryptToc(toc_data);
     }
 
-    const int b_num = (static_cast<int>(m_header.m_toc_entry_size) - 20) / 2;
+    const int b_num = (static_cast<int>(m_header.toc_entry_size) - 20) / 2;
     if (b_num < 1 || b_num > 8)
     {
         throw PsarcException("Invalid TOC entry size");
@@ -468,9 +466,9 @@ void PsarcFile::ReadToc()
 
     size_t pos = 0;
 
-    m_entries.resize(m_header.m_num_files);
+    m_entries.resize(m_header.num_files);
 
-    for (uint32_t i = 0; i < m_header.m_num_files; ++i)
+    for (uint32_t i = 0; i < m_header.num_files; ++i)
     {
         pos += 16; // Skip MD5
 
@@ -479,7 +477,7 @@ void PsarcFile::ReadToc()
             throw PsarcException("TOC data truncated while reading entry");
         }
 
-        m_entries[i].m_start_chunk_index = ReadBE32(toc_data.data() + pos);
+        m_entries[i].start_chunk_index = ReadBE32(toc_data.data() + pos);
         pos += 4;
 
         if (pos + static_cast<size_t>(b_num * 2) > toc_data.size())
@@ -498,8 +496,8 @@ void PsarcFile::ReadToc()
             offset = (offset << 8) | toc_data[pos++];
         }
 
-        m_entries[i].m_uncompressed_size = length;
-        m_entries[i].m_offset = offset;
+        m_entries[i].uncompressed_size = length;
+        m_entries[i].offset = offset;
     }
 
     while (pos + 1 < toc_data.size())
@@ -533,12 +531,12 @@ void PsarcFile::ReadManifest()
         }
     }
 
-    m_entries[0].m_name = "NamesBlock.bin";
+    m_entries[0].name = "NamesBlock.bin";
     m_file_map["NamesBlock.bin"] = 0;
 
     for (size_t i = 1; i < m_entries.size() && i - 1 < names.size(); ++i)
     {
-        m_entries[i].m_name = names[i - 1];
+        m_entries[i].name = names[i - 1];
         m_file_map[names[i - 1]] = static_cast<int>(i);
     }
 }
@@ -622,18 +620,18 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
     }
 
     const auto& entry = m_entries[index];
-    if (entry.m_uncompressed_size == 0)
+    if (entry.uncompressed_size == 0)
     {
         return {};
     }
 
     std::vector<uint8_t> result;
-    result.reserve(static_cast<size_t>(entry.m_uncompressed_size));
-    m_file->seekg(static_cast<std::streamoff>(entry.m_offset));
+    result.reserve(static_cast<size_t>(entry.uncompressed_size));
+    m_file->seekg(static_cast<std::streamoff>(entry.offset));
 
-    uint32_t z_index = entry.m_start_chunk_index;
+    uint32_t z_index = entry.start_chunk_index;
 
-    while (result.size() < entry.m_uncompressed_size)
+    while (result.size() < entry.uncompressed_size)
     {
         if (z_index >= m_z_lengths.size())
         {
@@ -644,10 +642,10 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
 
         if (z_len == 0)
         {
-            std::vector<uint8_t> block(m_header.m_block_size);
+            std::vector<uint8_t> block(m_header.block_size);
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             m_file->read(reinterpret_cast<char*>(block.data()),
-                         static_cast<std::streamsize>(m_header.m_block_size));
+                         static_cast<std::streamsize>(m_header.block_size));
             const auto bytes_read = static_cast<size_t>(m_file->gcount());
             if (bytes_read == 0 && !m_file->eof())
             {
@@ -666,13 +664,13 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
                 throw PsarcException("Failed to read compressed chunk");
             }
 
-            const uint64_t remaining = entry.m_uncompressed_size - result.size();
+            const uint64_t remaining = entry.uncompressed_size - result.size();
             const uint64_t expected_size =
-                std::min(remaining, static_cast<uint64_t>(m_header.m_block_size));
+                std::min(remaining, static_cast<uint64_t>(m_header.block_size));
 
             std::vector<uint8_t> decompressed;
-            const std::string_view compression(m_header.m_compression_method.data(),
-                                               m_header.m_compression_method.size());
+            const std::string_view compression(m_header.compression_method.data(),
+                                               m_header.compression_method.size());
 
             if (compression == "zlib")
             {
@@ -703,10 +701,9 @@ std::vector<uint8_t> PsarcFile::ExtractFileByIndex(int index)
         }
     }
 
-    result.resize(std::min(result.size(), static_cast<size_t>(entry.m_uncompressed_size)));
+    result.resize(std::min(result.size(), static_cast<size_t>(entry.uncompressed_size)));
 
-    if (entry.m_name.find("songs/bin/generic/") != std::string::npos &&
-        entry.m_name.ends_with(".sng"))
+    if (entry.name.find("songs/bin/generic/") != std::string::npos && entry.name.ends_with(".sng"))
     {
         result = DecryptSng(result);
     }
@@ -721,9 +718,9 @@ std::vector<std::string> PsarcFile::GetFileList() const
 
     for (const auto& entry : m_entries)
     {
-        if (!entry.m_name.empty())
+        if (!entry.name.empty())
         {
-            files.push_back(entry.m_name);
+            files.push_back(entry.name);
         }
     }
 
@@ -774,12 +771,12 @@ void PsarcFile::ExtractAll(const std::string& output_directory)
     for (size_t i = 0; i < m_entries.size(); ++i)
     {
         const auto& entry = m_entries[i];
-        if (entry.m_name.empty())
+        if (entry.name.empty())
         {
             continue;
         }
 
-        const fs::path output_path = fs::path(output_directory) / entry.m_name;
+        const fs::path output_path = fs::path(output_directory) / entry.name;
 
         try
         {
@@ -790,7 +787,7 @@ void PsarcFile::ExtractAll(const std::string& output_directory)
             std::ofstream out(output_path, std::ios::binary);
             if (!out)
             {
-                failed_files.push_back(std::format("{}: failed to create file", entry.m_name));
+                failed_files.push_back(std::format("{}: failed to create file", entry.name));
                 continue;
             }
 
@@ -800,12 +797,12 @@ void PsarcFile::ExtractAll(const std::string& output_directory)
 
             if (!out.good())
             {
-                failed_files.push_back(std::format("{}: failed to write data", entry.m_name));
+                failed_files.push_back(std::format("{}: failed to write data", entry.name));
             }
         }
         catch (const std::exception& e)
         {
-            failed_files.push_back(std::format("{}: {}", entry.m_name, e.what()));
+            failed_files.push_back(std::format("{}: {}", entry.name, e.what()));
         }
     }
 
@@ -833,18 +830,18 @@ void PsarcFile::ConvertAudio(const std::string& output_directory)
 
     for (const auto& entry : m_entries)
     {
-        if (entry.m_name.empty())
+        if (entry.name.empty())
         {
             continue;
         }
 
-        if (entry.m_name.ends_with(".bnk"))
+        if (entry.name.ends_with(".bnk"))
         {
-            bnk_files.push_back(entry.m_name);
+            bnk_files.push_back(entry.name);
         }
-        else if (entry.m_name.ends_with(".wem"))
+        else if (entry.name.ends_with(".wem"))
         {
-            wem_files.push_back(entry.m_name);
+            wem_files.push_back(entry.name);
         }
     }
 
@@ -1013,10 +1010,10 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
     std::vector<std::string> sng_files;
     for (const auto& entry : m_entries)
     {
-        if (entry.m_name.find("songs/bin/generic/") != std::string::npos &&
-            entry.m_name.ends_with(".sng"))
+        if (entry.name.find("songs/bin/generic/") != std::string::npos &&
+            entry.name.ends_with(".sng"))
         {
-            sng_files.push_back(entry.m_name);
+            sng_files.push_back(entry.name);
         }
     }
 
@@ -1025,7 +1022,7 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
     manifest_indices.reserve(m_entries.size());
     for (size_t i = 0; i < m_entries.size(); ++i)
     {
-        if (IsLikelyManifestFile(m_entries[i].m_name))
+        if (IsLikelyManifestFile(m_entries[i].name))
         {
             manifest_indices.push_back(static_cast<int>(i));
         }
@@ -1046,7 +1043,7 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
             for (const int idx : manifest_indices)
             {
                 const std::string json_stem =
-                    ToLower(fs::path(m_entries[idx].m_name).stem().string());
+                    ToLower(fs::path(m_entries[idx].name).stem().string());
                 if (json_stem == sng_stem)
                 {
                     matched_manifest = idx;
@@ -1058,7 +1055,7 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
             {
                 for (const int idx : manifest_indices)
                 {
-                    const std::string json_name = ToLower(m_entries[idx].m_name);
+                    const std::string json_name = ToLower(m_entries[idx].name);
                     if (json_name.find(sng_stem) != std::string::npos)
                     {
                         matched_manifest = idx;
