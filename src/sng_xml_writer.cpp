@@ -514,11 +514,10 @@ void WriteInstrumentalXml(const sng::SngData& sng, const std::filesystem::path& 
                                                                           "toned"};
         for (size_t i = 0; i < g_k_tone_name_tags.size(); ++i)
         {
-            if (manifest->tone_names.at(i).has_value() && !manifest->tone_names.at(i)->empty())
+            const auto& tone_name = manifest->tone_names.at(i);
+            if (tone_name.has_value() && !tone_name->empty())
             {
-                song.append_child(g_k_tone_name_tags.at(i))
-                    .text()
-                    .set(manifest->tone_names.at(i)->c_str());
+                song.append_child(g_k_tone_name_tags.at(i)).text().set(tone_name->c_str());
             }
         }
     }
