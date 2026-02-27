@@ -3,7 +3,11 @@
 #include "open-psarc/psarc_file.h"
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <format>
+#include <locale>
+#include <sstream>
 #include <vector>
 
 #include <pugixml.hpp>
@@ -14,6 +18,14 @@ namespace
 std::string FormatFloat(float value)
 {
     return std::format("{:.3f}", value);
+}
+
+std::string FormatPlainFloat(float value)
+{
+    std::ostringstream oss;
+    oss.imbue(std::locale::classic());
+    oss << value;
+    return oss.str();
 }
 
 bool Has(uint32_t mask, sng::NoteMask flag)
@@ -96,7 +108,10 @@ void WriteBendValues(pugi::xml_node parent, const std::vector<sng::BendValue>& b
     {
         auto bend_node = bends_node.append_child("bendValue");
         bend_node.append_attribute("time") = FormatFloat(bend.m_time).c_str();
-        bend_node.append_attribute("step") = FormatFloat(bend.m_step).c_str();
+        if (std::abs(bend.m_step) > 0.000001f)
+        {
+            bend_node.append_attribute("step") = FormatFloat(bend.m_step).c_str();
+        }
     }
 }
 
@@ -110,9 +125,9 @@ void WriteNoteFlags(pugi::xml_node node, const sng::Note& note)
     {
         node.append_attribute("accent") = 1;
     }
-    if (Has(note.m_mask, sng::BEND) && note.m_max_bend > 0.0f)
+    if (!note.m_bend_values.empty())
     {
-        node.append_attribute("bend") = FormatFloat(note.m_max_bend).c_str();
+        node.append_attribute("bend") = FormatPlainFloat(note.m_max_bend).c_str();
     }
     if (Has(note.m_mask, sng::HAMMERON))
     {
@@ -293,6 +308,10 @@ void WriteChordNoteFromTemplate(pugi::xml_node chord, const sng::SngData& sng,
         cn.append_attribute("vibrato") = cn_data.m_vibrato[string_idx];
     }
 
+    if (!cn_data.m_bend_data[string_idx].m_bend_values.empty())
+    {
+        cn.append_attribute("bend") = "0";
+    }
     WriteBendValues(cn, cn_data.m_bend_data[string_idx].m_bend_values);
 }
 
@@ -413,24 +432,18 @@ void WriteInstrumentalXml(const sng::SngData& sng, const std::filesystem::path& 
         }
     }
 
-    std::vector<const sng::NLinkedDifficulty*> nld_entries;
+    auto nld_node = song.append_child("newLinkedDiffs");
+    nld_node.append_attribute("count") = static_cast<int>(sng.m_nlinked_difficulties.size());
     for (const auto& nld : sng.m_nlinked_difficulties)
     {
-        if (nld.m_level_break >= 0 && !nld.m_nld_phrases.empty())
+        auto node = nld_node.append_child("newLinkedDiff");
+        node.append_attribute("levelBreak") = nld.m_level_break;
+        node.append_attribute("ratio") = "1.000";
+        node.append_attribute("phraseCount") = static_cast<int>(nld.m_nld_phrases.size());
+        for (const auto phrase_id : nld.m_nld_phrases)
         {
-            nld_entries.push_back(&nld);
-        }
-    }
-
-    auto linked_diffs = song.append_child("linkedDiffs");
-    linked_diffs.append_attribute("count") = static_cast<int>(nld_entries.size());
-    for (const auto* nld : nld_entries)
-    {
-        auto node = linked_diffs.append_child("linkedDiff");
-        node.append_attribute("levelBreak") = nld->m_level_break;
-        for (size_t i = 0; i < nld->m_nld_phrases.size(); ++i)
-        {
-            node.append_attribute(std::format("phraseId{}", i).c_str()) = nld->m_nld_phrases[i];
+            auto phrase = node.append_child("nld_phrase");
+            phrase.append_attribute("id") = phrase_id;
         }
     }
 
@@ -464,11 +477,17 @@ void WriteInstrumentalXml(const sng::SngData& sng, const std::filesystem::path& 
         node.append_attribute("displayName") = display_name.c_str();
         for (int i = 0; i < 6; ++i)
         {
-            node.append_attribute(std::format("finger{}", i).c_str()) = chord.m_fingers[i];
+            if (chord.m_fingers[i] != -1)
+            {
+                node.append_attribute(std::format("finger{}", i).c_str()) = chord.m_fingers[i];
+            }
         }
         for (int i = 0; i < 6; ++i)
         {
-            node.append_attribute(std::format("fret{}", i).c_str()) = chord.m_frets[i];
+            if (chord.m_frets[i] != -1)
+            {
+                node.append_attribute(std::format("fret{}", i).c_str()) = chord.m_frets[i];
+            }
         }
     }
 
@@ -478,7 +497,45 @@ void WriteInstrumentalXml(const sng::SngData& sng, const std::filesystem::path& 
     {
         auto node = ebeats.append_child("ebeat");
         node.append_attribute("time") = FormatFloat(bpm.m_time).c_str();
-        node.append_attribute("measure") = (bpm.m_mask & 0x01) ? bpm.m_measure : -1;
+        if ((bpm.m_mask & 0x01) != 0)
+        {
+            node.append_attribute("measure") = bpm.m_measure;
+        }
+    }
+
+    if (manifest && manifest->m_tone_base.has_value() && !manifest->m_tone_base->empty())
+    {
+        song.append_child("tonebase").text().set(manifest->m_tone_base->c_str());
+    }
+    if (manifest)
+    {
+        static constexpr std::array<const char*, 4> k_tone_name_tags = {"tonea", "toneb", "tonec",
+                                                                        "toned"};
+        for (size_t i = 0; i < k_tone_name_tags.size(); ++i)
+        {
+            if (manifest->m_tone_names[i].has_value() && !manifest->m_tone_names[i]->empty())
+            {
+                song.append_child(k_tone_name_tags[i])
+                    .text()
+                    .set(manifest->m_tone_names[i]->c_str());
+            }
+        }
+    }
+
+    auto tones = song.append_child("tones");
+    tones.append_attribute("count") = static_cast<int>(sng.m_tones.size());
+    for (const auto& tone : sng.m_tones)
+    {
+        auto node = tones.append_child("tone");
+        node.append_attribute("time") = FormatFloat(tone.m_time).c_str();
+        node.append_attribute("id") = tone.m_tone_id;
+
+        std::string tone_name = "N/A";
+        if (manifest && tone.m_tone_id >= 0 && tone.m_tone_id < 4)
+        {
+            tone_name = manifest->m_tone_names[static_cast<size_t>(tone.m_tone_id)].value_or("");
+        }
+        node.append_attribute("name") = tone_name.c_str();
     }
 
     auto sections = song.append_child("sections");
@@ -500,26 +557,16 @@ void WriteInstrumentalXml(const sng::SngData& sng, const std::filesystem::path& 
         node.append_attribute("code") = event.m_name.c_str();
     }
 
-    if (manifest && manifest->m_tone_base.has_value() && !manifest->m_tone_base->empty())
-    {
-        song.append_child("tonebase").text().set(manifest->m_tone_base->c_str());
-    }
-
-    auto tones = song.append_child("tones");
-    tones.append_attribute("count") = static_cast<int>(sng.m_tones.size());
-    for (const auto& tone : sng.m_tones)
-    {
-        auto node = tones.append_child("tone");
-        node.append_attribute("time") = FormatFloat(tone.m_time).c_str();
-        node.append_attribute("id") = tone.m_tone_id;
-
-        std::string tone_name = "N/A";
-        if (manifest && tone.m_tone_id >= 0 && tone.m_tone_id < 4)
-        {
-            tone_name = manifest->m_tone_names[static_cast<size_t>(tone.m_tone_id)].value_or("");
-        }
-        node.append_attribute("name") = tone_name.c_str();
-    }
+    auto transcription_track = song.append_child("transcriptionTrack");
+    transcription_track.append_attribute("difficulty") = -1;
+    auto tt_notes = transcription_track.append_child("notes");
+    tt_notes.append_attribute("count") = 0;
+    auto tt_chords = transcription_track.append_child("chords");
+    tt_chords.append_attribute("count") = 0;
+    auto tt_anchors = transcription_track.append_child("anchors");
+    tt_anchors.append_attribute("count") = 0;
+    auto tt_hand_shapes = transcription_track.append_child("handShapes");
+    tt_hand_shapes.append_attribute("count") = 0;
 
     auto levels = song.append_child("levels");
     levels.append_attribute("count") = static_cast<int>(sng.m_arrangements.size());
