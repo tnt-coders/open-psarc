@@ -225,14 +225,15 @@ void WriteChordNoteFromTemplate(pugi::xml_node chord, const sng::SngData& sng,
     {
         cn.append_attribute("sustain") = FormatFloat(note.m_sustain).c_str();
     }
-    if (template_chord.m_fingers[string_idx] >= 0)
-    {
-        cn.append_attribute("leftHand") = template_chord.m_fingers[string_idx];
-    }
+    const int left_hand = static_cast<int>(template_chord.m_fingers[string_idx]);
 
     if (note.m_chord_notes_id < 0 ||
         static_cast<size_t>(note.m_chord_notes_id) >= sng.m_chord_notes.size())
     {
+        if (left_hand != -1)
+        {
+            cn.append_attribute("leftHand") = left_hand;
+        }
         return;
     }
 
@@ -244,6 +245,10 @@ void WriteChordNoteFromTemplate(pugi::xml_node chord, const sng::SngData& sng,
     if (Has(cn_data.m_mask[string_idx], sng::ACCENT))
     {
         cn.append_attribute("accent") = 1;
+    }
+    if (!cn_data.m_bend_data[string_idx].m_bend_values.empty())
+    {
+        cn.append_attribute("bend") = "0";
     }
     if (Has(cn_data.m_mask[string_idx], sng::HAMMERON))
     {
@@ -261,6 +266,10 @@ void WriteChordNoteFromTemplate(pugi::xml_node chord, const sng::SngData& sng,
     if (Has(cn_data.m_mask[string_idx], sng::IGNORE))
     {
         cn.append_attribute("ignore") = 1;
+    }
+    if (left_hand != -1)
+    {
+        cn.append_attribute("leftHand") = left_hand;
     }
     if (Has(cn_data.m_mask[string_idx], sng::MUTE))
     {
@@ -308,10 +317,6 @@ void WriteChordNoteFromTemplate(pugi::xml_node chord, const sng::SngData& sng,
         cn.append_attribute("vibrato") = cn_data.m_vibrato[string_idx];
     }
 
-    if (!cn_data.m_bend_data[string_idx].m_bend_values.empty())
-    {
-        cn.append_attribute("bend") = "0";
-    }
     WriteBendValues(cn, cn_data.m_bend_data[string_idx].m_bend_values);
 }
 
