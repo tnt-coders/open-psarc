@@ -2,16 +2,21 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <filesystem>
 #include <format>
+#include <optional>
 #include <print>
 #include <sstream>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 
 #include "sng_parser.h"
 #include "sng_xml_writer.h"
 
 #include <lzma.h>
+#include <nlohmann/json.hpp>
 #include <openssl/evp.h>
 #include <wwtools/wwtools.h>
 #include <zlib.h>
@@ -52,6 +57,196 @@ static constexpr uint32_t g_sng_compressed_flag = 0x01;
 [[nodiscard]] static constexpr uint32_t ReadBE32(const uint8_t* data) noexcept
 {
     return (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+}
+
+const nlohmann::json* FindJsonKey(const nlohmann::json& obj,
+                                  std::initializer_list<std::string_view> keys)
+{
+    if (!obj.is_object())
+    {
+        return nullptr;
+    }
+
+    for (const auto key : keys)
+    {
+        const std::string key_str(key);
+        if (obj.contains(key_str))
+        {
+            return &obj.at(key_str);
+        }
+    }
+    return nullptr;
+}
+
+const nlohmann::json* ResolveManifestSource(const nlohmann::json& root)
+{
+    if (!root.is_object())
+    {
+        return nullptr;
+    }
+
+    const auto* entries = FindJsonKey(root, {"Entries", "entries"});
+    if (!entries || !entries->is_object() || entries->empty())
+    {
+        return nullptr;
+    }
+
+    const auto first = entries->begin();
+    if (!first.value().is_object())
+    {
+        return nullptr;
+    }
+
+    const auto* attributes = FindJsonKey(first.value(), {"Attributes", "attributes"});
+    if (!attributes || !attributes->is_object())
+    {
+        return nullptr;
+    }
+
+    return attributes;
+}
+
+template <typename T>
+std::optional<T> ReadJsonValue(const nlohmann::json& obj,
+                               std::initializer_list<std::string_view> keys)
+{
+    const auto* value = FindJsonKey(obj, keys);
+    if (!value || value->is_null())
+    {
+        return std::nullopt;
+    }
+
+    if constexpr (std::is_same_v<T, std::string>)
+    {
+        if (value->is_string())
+        {
+            return value->get<std::string>();
+        }
+        return std::nullopt;
+    }
+    if constexpr (std::is_same_v<T, float>)
+    {
+        if (value->is_number())
+        {
+            return static_cast<float>(value->get<double>());
+        }
+        return std::nullopt;
+    }
+    if constexpr (std::is_same_v<T, int>)
+    {
+        if (value->is_number_integer() || value->is_number_unsigned())
+        {
+            return value->get<int>();
+        }
+        if (value->is_number_float())
+        {
+            return static_cast<int>(value->get<double>());
+        }
+        return std::nullopt;
+    }
+
+    return std::nullopt;
+}
+
+SngManifestMetadata ParseManifestMetadata(const std::string& json_text)
+{
+    SngManifestMetadata metadata;
+
+    nlohmann::json root;
+    try
+    {
+        constexpr std::string_view utf8_bom("\xEF\xBB\xBF");
+        std::string_view payload(json_text);
+        if (payload.starts_with(utf8_bom))
+        {
+            payload.remove_prefix(utf8_bom.size());
+        }
+        root = nlohmann::json::parse(payload);
+    }
+    catch (const std::exception&)
+    {
+        return metadata;
+    }
+
+    const nlohmann::json* source = ResolveManifestSource(root);
+    if (!source)
+    {
+        return metadata;
+    }
+
+    metadata.m_title = ReadJsonValue<std::string>(*source, {"SongName", "songName"});
+    metadata.m_arrangement =
+        ReadJsonValue<std::string>(*source, {"ArrangementName", "arrangementName"});
+    metadata.m_cent_offset = ReadJsonValue<float>(*source, {"CentOffset", "centOffset"});
+    metadata.m_song_name_sort =
+        ReadJsonValue<std::string>(*source, {"SongNameSort", "songNameSort"});
+    metadata.m_average_tempo =
+        ReadJsonValue<float>(*source, {"SongAverageTempo", "songAverageTempo"});
+    metadata.m_artist_name = ReadJsonValue<std::string>(*source, {"ArtistName", "artistName"});
+    metadata.m_artist_name_sort =
+        ReadJsonValue<std::string>(*source, {"ArtistNameSort", "artistNameSort"});
+    metadata.m_album_name = ReadJsonValue<std::string>(*source, {"AlbumName", "albumName"});
+    metadata.m_album_name_sort =
+        ReadJsonValue<std::string>(*source, {"AlbumNameSort", "albumNameSort"});
+    metadata.m_album_year = ReadJsonValue<int>(*source, {"SongYear", "songYear"});
+    metadata.m_tone_base = ReadJsonValue<std::string>(*source, {"Tone_Base", "toneBase"});
+    metadata.m_tone_names[0] = ReadJsonValue<std::string>(*source, {"Tone_A", "toneA"});
+    metadata.m_tone_names[1] = ReadJsonValue<std::string>(*source, {"Tone_B", "toneB"});
+    metadata.m_tone_names[2] = ReadJsonValue<std::string>(*source, {"Tone_C", "toneC"});
+    metadata.m_tone_names[3] = ReadJsonValue<std::string>(*source, {"Tone_D", "toneD"});
+
+    const auto* props = FindJsonKey(*source, {"ArrangementProperties", "arrangementProperties"});
+    if (props && props->is_object())
+    {
+        SngManifestArrangementProperties parsed;
+        parsed.m_represent = ReadJsonValue<int>(*props, {"represent"}).value_or(0);
+        parsed.m_bonus_arr = ReadJsonValue<int>(*props, {"bonusArr"}).value_or(0);
+        parsed.m_standard_tuning = ReadJsonValue<int>(*props, {"standardTuning"}).value_or(0);
+        parsed.m_non_standard_chords =
+            ReadJsonValue<int>(*props, {"nonStandardChords"}).value_or(0);
+        parsed.m_barre_chords = ReadJsonValue<int>(*props, {"barreChords"}).value_or(0);
+        parsed.m_power_chords = ReadJsonValue<int>(*props, {"powerChords"}).value_or(0);
+        parsed.m_drop_d_power = ReadJsonValue<int>(*props, {"dropDPower"}).value_or(0);
+        parsed.m_open_chords = ReadJsonValue<int>(*props, {"openChords"}).value_or(0);
+        parsed.m_finger_picking = ReadJsonValue<int>(*props, {"fingerPicking"}).value_or(0);
+        parsed.m_pick_direction = ReadJsonValue<int>(*props, {"pickDirection"}).value_or(0);
+        parsed.m_double_stops = ReadJsonValue<int>(*props, {"doubleStops"}).value_or(0);
+        parsed.m_palm_mutes = ReadJsonValue<int>(*props, {"palmMutes"}).value_or(0);
+        parsed.m_harmonics = ReadJsonValue<int>(*props, {"harmonics"}).value_or(0);
+        parsed.m_pinch_harmonics = ReadJsonValue<int>(*props, {"pinchHarmonics"}).value_or(0);
+        parsed.m_hopo = ReadJsonValue<int>(*props, {"hopo"}).value_or(0);
+        parsed.m_tremolo = ReadJsonValue<int>(*props, {"tremolo"}).value_or(0);
+        parsed.m_slides = ReadJsonValue<int>(*props, {"slides"}).value_or(0);
+        parsed.m_unpitched_slides = ReadJsonValue<int>(*props, {"unpitchedSlides"}).value_or(0);
+        parsed.m_bends = ReadJsonValue<int>(*props, {"bends"}).value_or(0);
+        parsed.m_tapping = ReadJsonValue<int>(*props, {"tapping"}).value_or(0);
+        parsed.m_vibrato = ReadJsonValue<int>(*props, {"vibrato"}).value_or(0);
+        parsed.m_fret_hand_mutes = ReadJsonValue<int>(*props, {"fretHandMutes"}).value_or(0);
+        parsed.m_slap_pop = ReadJsonValue<int>(*props, {"slapPop"}).value_or(0);
+        parsed.m_two_finger_picking = ReadJsonValue<int>(*props, {"twoFingerPicking"}).value_or(0);
+        parsed.m_fifths_and_octaves = ReadJsonValue<int>(*props, {"fifthsAndOctaves"}).value_or(0);
+        parsed.m_syncopation = ReadJsonValue<int>(*props, {"syncopation"}).value_or(0);
+        parsed.m_bass_pick = ReadJsonValue<int>(*props, {"bassPick"}).value_or(0);
+        parsed.m_sustain = ReadJsonValue<int>(*props, {"sustain"}).value_or(0);
+        parsed.m_path_lead = ReadJsonValue<int>(*props, {"pathLead"}).value_or(0);
+        parsed.m_path_rhythm = ReadJsonValue<int>(*props, {"pathRhythm"}).value_or(0);
+        parsed.m_path_bass = ReadJsonValue<int>(*props, {"pathBass"}).value_or(0);
+        metadata.m_arrangement_properties = parsed;
+    }
+
+    return metadata;
+}
+
+bool IsLikelyManifestFile(std::string_view path)
+{
+    return path.ends_with(".json") && path.find("songs_dlc_") != std::string_view::npos;
+}
+
+std::string ToLower(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return value;
 }
 
 PsarcFile::PsarcFile(std::string file_path) : m_file_path(std::move(file_path))
@@ -826,6 +1021,15 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
     }
 
     std::vector<std::string> failed_files;
+    std::vector<int> manifest_indices;
+    manifest_indices.reserve(m_entries.size());
+    for (size_t i = 0; i < m_entries.size(); ++i)
+    {
+        if (IsLikelyManifestFile(m_entries[i].m_name))
+        {
+            manifest_indices.push_back(static_cast<int>(i));
+        }
+    }
 
     for (const auto& sng_name : sng_files)
     {
@@ -835,13 +1039,48 @@ void PsarcFile::ConvertSng(const std::string& output_directory)
 
             const auto sng_data = SngParser::Parse(data);
 
+            const std::string sng_stem = ToLower(fs::path(sng_name).stem().string());
+            std::optional<SngManifestMetadata> manifest;
+
+            int matched_manifest = -1;
+            for (const int idx : manifest_indices)
+            {
+                const std::string json_stem =
+                    ToLower(fs::path(m_entries[idx].m_name).stem().string());
+                if (json_stem == sng_stem)
+                {
+                    matched_manifest = idx;
+                    break;
+                }
+            }
+
+            if (matched_manifest < 0)
+            {
+                for (const int idx : manifest_indices)
+                {
+                    const std::string json_name = ToLower(m_entries[idx].m_name);
+                    if (json_name.find(sng_stem) != std::string::npos)
+                    {
+                        matched_manifest = idx;
+                        break;
+                    }
+                }
+            }
+
+            if (matched_manifest >= 0)
+            {
+                const auto json_data = ExtractFileByIndex(matched_manifest);
+                std::string json_text(json_data.begin(), json_data.end());
+                manifest = ParseManifestMetadata(json_text);
+            }
+
             // Output path: songs/bin/generic/foo.sng -> {output_dir}/songs/arr/foo.xml
             const fs::path sng_path(sng_name);
             const std::string xml_name = sng_path.stem().string() + ".xml";
             const fs::path xml_path = fs::path(output_directory) / "songs" / "arr" / xml_name;
             fs::create_directories(xml_path.parent_path());
 
-            SngXmlWriter::Write(sng_data, xml_path);
+            SngXmlWriter::Write(sng_data, xml_path, manifest ? &(*manifest) : nullptr);
         }
         catch (const std::exception& e)
         {

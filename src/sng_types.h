@@ -39,7 +39,7 @@ enum NoteMask : uint32_t
     PARENT = 0x08000000,
     CHILD = 0x10000000,
     ARPEGGIO = 0x20000000,
-    STRUM = 0x80000000,
+    CHORDPANEL = 0x80000000,
 };
 
 struct BendValue
@@ -94,8 +94,8 @@ struct ChordNotes
 {
     uint32_t m_mask[6] = {};
     BendData m_bend_data[6] = {};
-    uint8_t m_slide_to[6] = {};
-    uint8_t m_slide_unpitch_to[6] = {};
+    int8_t m_slide_to[6] = {};
+    int8_t m_slide_unpitch_to[6] = {};
     int16_t m_vibrato[6] = {};
 };
 
@@ -221,10 +221,10 @@ struct Anchor
 struct AnchorExtension
 {
     float m_beat_time = 0;
-    uint8_t m_fret_id = 0;
+    int8_t m_fret_id = 0;
     int32_t m_unk2 = 0;
     int16_t m_unk3 = 0;
-    uint8_t m_unk4 = 0;
+    int8_t m_unk4 = 0;
 };
 
 struct Fingerprint
@@ -254,13 +254,13 @@ struct Note
     int16_t m_next_iteration = 0;
     int16_t m_prev_iteration = 0;
     int16_t m_parent_prev_note = 0;
-    uint8_t m_slide_to = 0;
-    uint8_t m_slide_unpitch_to = 0;
-    uint8_t m_left_hand = 0;
-    uint8_t m_tap = 0;
-    uint8_t m_pick_direction = 0;
-    uint8_t m_slap = 0;
-    uint8_t m_pluck = 0;
+    int8_t m_slide_to = 0;
+    int8_t m_slide_unpitch_to = 0;
+    int8_t m_left_hand = 0;
+    int8_t m_tap = 0;
+    int8_t m_pick_direction = 0;
+    int8_t m_slap = 0;
+    int8_t m_pluck = 0;
     int16_t m_vibrato = 0;
     float m_sustain = 0;
     float m_max_bend = 0;
@@ -293,14 +293,14 @@ struct Metadata
     double m_point_per_note = 0;
     float m_first_beat_length = 0;
     float m_start_time = 0;
-    uint8_t m_capo_fret_id = 0;
+    int8_t m_capo_fret_id = 0;
     std::string m_last_conversion_date_time;
     int16_t m_part = 0;
     float m_song_length = 0;
     int32_t m_string_count = 0;
     std::vector<int16_t> m_tuning;
-    float m_unk1 = 0;
-    float m_unk2 = 0;
+    float m_first_note_time = 0;
+    float m_first_note_time2 = 0;
     int32_t m_max_difficulty = 0;
 };
 

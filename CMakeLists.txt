@@ -28,10 +28,12 @@ endif()
 # Find dependencies
 find_package(PackageBuilder REQUIRED)
 find_package(WwiseAudioTools REQUIRED)
-find_package(ZLIB REQUIRED)
+
 find_package(LibLZMA REQUIRED)
+find_package(nlohmann_json REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(pugixml REQUIRED)
+find_package(ZLIB REQUIRED)
 
 include(PackageBuilder)
 
@@ -46,6 +48,7 @@ target_compile_features(OpenPSARC PUBLIC cxx_std_23)
 target_link_libraries(
     OpenPSARC
     PRIVATE ZLIB::ZLIB LibLZMA::LibLZMA OpenSSL::SSL OpenSSL::Crypto pugixml::pugixml
+            nlohmann_json::nlohmann_json
     PUBLIC WwiseAudioTools::WwiseAudioTools)
 
 # CLI

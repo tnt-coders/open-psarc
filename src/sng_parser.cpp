@@ -227,13 +227,13 @@ std::vector<sng::ChordNotes> ReadChordNotes(BinaryReader& reader)
             bd.m_used_count = reader.ReadInt32();
             bd.m_bend_values.resize(bd.m_used_count);
         }
-        for (unsigned char& i : cn.m_slide_to)
+        for (int8_t& i : cn.m_slide_to)
         {
-            i = reader.ReadUInt8();
+            i = reader.ReadInt8();
         }
-        for (unsigned char& i : cn.m_slide_unpitch_to)
+        for (int8_t& i : cn.m_slide_unpitch_to)
         {
-            i = reader.ReadUInt8();
+            i = reader.ReadInt8();
         }
         for (short& i : cn.m_vibrato)
         {
@@ -460,13 +460,13 @@ sng::Note ReadNote(BinaryReader& reader)
     note.m_next_iteration = reader.ReadInt16();
     note.m_prev_iteration = reader.ReadInt16();
     note.m_parent_prev_note = reader.ReadInt16();
-    note.m_slide_to = reader.ReadUInt8();
-    note.m_slide_unpitch_to = reader.ReadUInt8();
-    note.m_left_hand = reader.ReadUInt8();
-    note.m_tap = reader.ReadUInt8();
-    note.m_pick_direction = reader.ReadUInt8();
-    note.m_slap = reader.ReadUInt8();
-    note.m_pluck = reader.ReadUInt8();
+    note.m_slide_to = reader.ReadInt8();
+    note.m_slide_unpitch_to = reader.ReadInt8();
+    note.m_left_hand = reader.ReadInt8();
+    note.m_tap = reader.ReadInt8();
+    note.m_pick_direction = reader.ReadInt8();
+    note.m_slap = reader.ReadInt8();
+    note.m_pluck = reader.ReadInt8();
     note.m_vibrato = reader.ReadInt16();
     note.m_sustain = reader.ReadFloat();
     note.m_max_bend = reader.ReadFloat();
@@ -511,16 +511,16 @@ std::vector<sng::Arrangement> ReadArrangements(BinaryReader& reader)
         for (auto& ext : arr.m_anchor_extensions)
         {
             ext.m_beat_time = reader.ReadFloat();
-            ext.m_fret_id = reader.ReadUInt8();
+            ext.m_fret_id = reader.ReadInt8();
             ext.m_unk2 = reader.ReadInt32();
             ext.m_unk3 = reader.ReadInt16();
-            ext.m_unk4 = reader.ReadUInt8();
+            ext.m_unk4 = reader.ReadInt8();
         }
 
-        // Fingerprints - arpeggio
-        const auto arp_count = reader.ReadInt32();
-        arr.m_fingerprints_arpeggio.resize(arp_count);
-        for (auto& fp : arr.m_fingerprints_arpeggio)
+        // Fingerprints - handshape
+        const auto hs_count = reader.ReadInt32();
+        arr.m_fingerprints_handshape.resize(hs_count);
+        for (auto& fp : arr.m_fingerprints_handshape)
         {
             fp.m_chord_id = reader.ReadInt32();
             fp.m_start_time = reader.ReadFloat();
@@ -529,10 +529,10 @@ std::vector<sng::Arrangement> ReadArrangements(BinaryReader& reader)
             fp.m_unk2 = reader.ReadFloat();
         }
 
-        // Fingerprints - handshape
-        const auto hs_count = reader.ReadInt32();
-        arr.m_fingerprints_handshape.resize(hs_count);
-        for (auto& fp : arr.m_fingerprints_handshape)
+        // Fingerprints - arpeggio
+        const auto arp_count = reader.ReadInt32();
+        arr.m_fingerprints_arpeggio.resize(arp_count);
+        for (auto& fp : arr.m_fingerprints_arpeggio)
         {
             fp.m_chord_id = reader.ReadInt32();
             fp.m_start_time = reader.ReadFloat();
@@ -584,7 +584,7 @@ sng::Metadata ReadMetadata(BinaryReader& reader)
     meta.m_point_per_note = reader.ReadDouble();
     meta.m_first_beat_length = reader.ReadFloat();
     meta.m_start_time = reader.ReadFloat();
-    meta.m_capo_fret_id = reader.ReadUInt8();
+    meta.m_capo_fret_id = reader.ReadInt8();
     meta.m_last_conversion_date_time = reader.ReadFixedString(32);
     meta.m_part = reader.ReadInt16();
     meta.m_song_length = reader.ReadFloat();
@@ -594,8 +594,8 @@ sng::Metadata ReadMetadata(BinaryReader& reader)
     {
         t = reader.ReadInt16();
     }
-    meta.m_unk1 = reader.ReadFloat();
-    meta.m_unk2 = reader.ReadFloat();
+    meta.m_first_note_time = reader.ReadFloat();
+    meta.m_first_note_time2 = reader.ReadFloat();
     meta.m_max_difficulty = reader.ReadInt32();
     return meta;
 }
