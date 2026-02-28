@@ -66,6 +66,7 @@ open-psarc -l archive.psarc
 
 ```cpp
 #include <open-psarc/psarc_file.h>
+#include <print>
 
 int main()
 {
