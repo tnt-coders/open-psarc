@@ -11,21 +11,13 @@
 
 class PsarcException : public std::runtime_error
 {
-  public:
+public:
     using std::runtime_error::runtime_error;
 };
 
 class PsarcFile
 {
-  public:
-    struct FileEntry
-    {
-        std::string name;
-        uint64_t offset = 0;
-        uint64_t uncompressed_size = 0;
-        uint32_t start_chunk_index = 0;
-    };
-
+public:
     explicit PsarcFile(std::string file_path);
     ~PsarcFile();
 
@@ -43,6 +35,7 @@ class PsarcFile
 
     [[nodiscard]] std::vector<std::string> GetFileList() const;
     [[nodiscard]] bool FileExists(const std::string& file_name) const;
+    [[nodiscard]] uint64_t GetFileSize(const std::string& file_name) const;
     [[nodiscard]] std::vector<uint8_t> ExtractFile(const std::string& file_name);
     void ExtractFileTo(const std::string& file_name, const std::string& output_path);
     void ExtractAll(const std::string& output_directory);
@@ -53,10 +46,16 @@ class PsarcFile
     {
         return static_cast<int>(m_entries.size());
     }
-    [[nodiscard]] const FileEntry* GetEntry(int index) const;
-    [[nodiscard]] const FileEntry* GetEntry(const std::string& file_name) const;
 
-  private:
+private:
+    struct FileEntry
+    {
+        std::string name;
+        uint64_t offset = 0;
+        uint64_t uncompressed_size = 0;
+        uint32_t start_chunk_index = 0;
+    };
+
     struct Header
     {
         uint32_t magic = 0;

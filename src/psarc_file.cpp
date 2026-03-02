@@ -314,19 +314,14 @@ void PsarcFile::Close()
     m_is_open = false;
 }
 
-const PsarcFile::FileEntry* PsarcFile::GetEntry(int index) const
-{
-    if (index < 0 || std::cmp_greater_equal(index, m_entries.size()))
-    {
-        return nullptr;
-    }
-    return &m_entries[index];
-}
-
-const PsarcFile::FileEntry* PsarcFile::GetEntry(const std::string& file_name) const
+uint64_t PsarcFile::GetFileSize(const std::string& file_name) const
 {
     const auto it = m_file_map.find(file_name);
-    return (it != m_file_map.end()) ? &m_entries[it->second] : nullptr;
+    if (it == m_file_map.end())
+    {
+        throw PsarcException(std::format("File not found: {}", file_name));
+    }
+    return m_entries[it->second].uncompressed_size;
 }
 
 void PsarcFile::ReadHeader()

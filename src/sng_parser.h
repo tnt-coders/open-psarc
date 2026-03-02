@@ -7,6 +7,6 @@
 
 class SngParser
 {
-  public:
+public:
     [[nodiscard]] static sng::SngData Parse(std::span<const uint8_t> data);
 };

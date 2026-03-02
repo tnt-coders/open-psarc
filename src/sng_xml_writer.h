@@ -61,7 +61,7 @@ struct SngManifestMetadata
 
 class SngXmlWriter
 {
-  public:
+public:
     static void Write(const sng::SngData& sng, const std::filesystem::path& output_path,
                       const SngManifestMetadata* manifest = nullptr);
 };

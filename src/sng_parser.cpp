@@ -10,7 +10,7 @@ namespace
 
 class BinaryReader
 {
-  public:
+public:
     explicit BinaryReader(std::span<const uint8_t> data) : m_data(data)
     {
     }
@@ -126,7 +126,7 @@ class BinaryReader
         return m_data.size();
     }
 
-  private:
+private:
     std::span<const uint8_t> m_data;
     size_t m_pos = 0;
 };

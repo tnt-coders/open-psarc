@@ -120,10 +120,7 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
             std::println("");
             for (const auto& name : psarc.GetFileList())
             {
-                if (const auto* entry = psarc.GetEntry(name))
-                {
-                    std::println("  {} ({} bytes)", name, entry->uncompressed_size);
-                }
+                std::println("  {} ({} bytes)", name, psarc.GetFileSize(name));
             }
         }
 
