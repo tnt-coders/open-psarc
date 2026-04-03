@@ -14,6 +14,30 @@ Generic PSARC extraction works for any PSARC archive; the conversion tools (audi
 - SNG binary to XML arrangement conversion
 - Available as both a C++ library and CLI tool
 
+## Library Integration
+
+This package is not on Conan Center. To consume it as a dependency, use the [tnt-coders fork of cmake-conan](https://github.com/tnt-coders/cmake-conan) which supports building packages from source via a `#recipe:` annotation.
+
+In your `conanfile.txt`:
+
+```ini
+[requires]
+open-psarc/0.0.1 #recipe: https://github.com/tnt-coders/open-psarc.git
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+Or in your `conanfile.py`:
+
+```python
+def requirements(self):
+    self.requires("open-psarc/0.0.1") #recipe: https://github.com/tnt-coders/open-psarc.git
+```
+
+The cmake-conan provider will automatically clone the repository, run `conan create`, and cache the package. No manual steps are needed.
+
 ## Building
 
 ### Prerequisites
@@ -25,14 +49,11 @@ Generic PSARC extraction works for any PSARC archive; the conversion tools (audi
 ### Build Steps
 
 ```bash
-# Install dependencies
-conan install . --output-folder=build/debug --build=missing
-
-# Configure
-cmake --preset conan-debug      # or conan-release
+# Configure (automatically installs Conan dependencies)
+cmake --preset debug      # or release
 
 # Build
-cmake --build build/debug       # or build/release
+cmake --build --preset debug       # or release
 ```
 
 ## Usage
