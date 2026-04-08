@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 # Define the project
 project(
     OpenPSARC
-    VERSION 0.0.1
+    VERSION 0.0.2
     DESCRIPTION "Open source library to extract PSARC files"
     LANGUAGES C CXX)
 
