@@ -29,8 +29,8 @@ class OpenPsarcConan(ConanFile):
             self.options.rm_safe("fPIC")
 
     def requirements(self):
-        self.requires("cmake-package-builder/1.1.0") #recipe: https://github.com/tnt-coders/cmake-package-builder.git
-        self.requires("wwise-audio-tools/1.0.0") #recipe: https://github.com/tnt-coders/wwise-audio-tools.git
+        self.requires("cmake-package-builder/1.2.0") #recipe: https://github.com/tnt-coders/cmake-package-builder.git
+        self.requires("wwise-audio-tools/1.0.2") #recipe: https://github.com/tnt-coders/wwise-audio-tools.git
 
         self.requires("nlohmann_json/3.12.0")
         self.requires("openssl/3.6.1")
